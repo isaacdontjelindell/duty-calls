@@ -53,3 +53,13 @@ CREATE TABLE auth_cas(
     renew CHAR(1)
 );
 success!
+timestamp: 2013-04-29T21:04:55.407512
+CREATE TABLE locations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    location_name CHAR(512),
+    calendar_url CHAR(512),
+    twilio_number_id CHAR(512),
+    is_res_life CHAR(1),
+    contact_dict TEXT
+);
+success!
