@@ -1,4 +1,5 @@
 web2py/applications/duty_calls/private/conf.json
 *.pyc
-applications/duty_calls/errors/*
-applications/admin/sessions/*
+web2py/applications/duty_calls/errors/*
+web2py/applications/admin/sessions/*
+web2py/applications/duty_calls/sessions/*

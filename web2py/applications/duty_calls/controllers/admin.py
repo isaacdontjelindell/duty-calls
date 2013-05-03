@@ -1,8 +1,15 @@
+import util
+
 def display():
     env = request.env
     
     q = db.locations.id > 0
-    result_set = db(q)
+    locations = db(q).select()
 
-    return dict(rows=result_set.select())
+    for loc in locations:
+        duty = util.getCurrentPersonsOnDuty(loc.calendar_url, loc.is_res_life)
+        print "On duty: " +  str(duty)
+        loc['twilio_number_str'] = util.getTwilioNumber(loc['twilio_number_id'])
+
+    return dict(locations=locations)
         
