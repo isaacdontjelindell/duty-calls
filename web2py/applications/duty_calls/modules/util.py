@@ -68,5 +68,16 @@ def getCurrentPersonsOnDuty(calendar_url, is_res_life):
 
     if len(on_duty_names) == 0:
         on_duty_names.append("ResLife Office")
-    return on_duty_names       
+    return on_duty_names
+
+def getCurrentForwardingDestinations(twilio_number_id): #Returns a tuple with the first element a list of simulring numbers
+    #curently on call and the second item the fail number string
+    current_numbers = []
+
+    split_url = twilio_client.phone_numbers.get(twilio_number_id).voice_url.split("=")
+    for part in split_url:
+        if str(part).__contains__("-"):
+            current_numbers.append(str(part.split("&")[0]))
+    fail_number = current_numbers.pop(current_numbers.__len__() - 1)
+    return (current_numbers, fail_number)
 
