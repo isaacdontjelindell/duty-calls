@@ -62,9 +62,12 @@ auth.settings.reset_password_requires_verification = True
 ## register with janrain.com, write your domain:api_key in private/janrain.key
 #from gluon.contrib.login_methods.rpx_account import use_janrain
 #use_janrain(auth, filename='private/janrain.key')
-
-from gluon.contrib.login_methods.gae_google_account import GaeGoogleAccount
-auth.settings.login_form = GaeGoogleAccount()
+if request.env.web2py_runtime_gae:
+    from gluon.contrib.login_methods.gae_google_account import GaeGoogleAccount
+    auth.settings.login_form = GaeGoogleAccount()
+else:
+    from gluon.contrib.login_methods.rpx_account import use_janrain
+    use_janrain(auth, filename='private/janrain.key')
 
 #########################################################################
 ## Define your tables below (or better in another model file) for example
