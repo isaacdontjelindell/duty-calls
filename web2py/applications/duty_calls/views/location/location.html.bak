@@ -1,5 +1,0 @@
-{{extend 'layout.html'}}
-
-{{loc=rows[0]}}
-
-<h1>{{=loc.location_name}}</h1>
