@@ -1,5 +1,6 @@
 import util
 
+@auth.requires_membership("admin")
 def display():
     env = request.env
     
