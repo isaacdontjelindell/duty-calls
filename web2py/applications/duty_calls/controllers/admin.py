@@ -1,6 +1,6 @@
 import util
 
-@auth.requires_membership("admin")
+@auth.requires_login()
 def display():
     env = request.env
     
