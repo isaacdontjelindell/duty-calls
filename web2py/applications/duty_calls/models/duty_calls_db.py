@@ -4,6 +4,10 @@
 # significant performance hit.
 from gluon.custom_import import track_changes; track_changes(True)
 
+db.define_table('keys',
+    Field('name','string'),
+    Field('value','string')
+)
 
 db.define_table('locations',
     Field('location_name','string', unique=True),
