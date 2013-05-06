@@ -1,5 +1,6 @@
 import util
 
+@auth.requires_login()
 def display():
     env = request.env
     

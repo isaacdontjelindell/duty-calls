@@ -81,3 +81,36 @@ def getCurrentForwardingDestinations(twilio_number_id): #Returns a tuple with th
     fail_number = current_numbers.pop(current_numbers.__len__() - 1)
     return (current_numbers, fail_number)
 
+def update(twilio_number_id,calendar_url,is_res_life,fail_number):
+    ''' checks for changes to the person on duty and makes necessary changes to forwarding info '''
+    curr_forwarding_destinations,failNum = getCurrentForwardingDestinations(twilio_number_id)
+        
+    new_forwarding_destinations = []
+
+    for name in getCurrentPersonsOnDuty(calendar_url,is_res_life):
+        new_person_on_duty = name
+        try:
+            new_forwarding_destinations.append(self.info["contact_list"][new_person_on_duty.strip()])#TODO update this line for DB once the model is built
+        except KeyError:
+            # TODO better handle this error Send AHD a text / email
+            new_forwarding_destinations.append("000-000-0000")
+
+    if not curr_forwarding_destinations == new_forwarding_destinations:
+        self.updateForwardingDestinations(new_forwarding_destinations, failNum)
+
+def updateForwardingDestinations(twilio_number_id,new_destination_numbers, failNumber):
+    voice_URL = "http://twimlets.com/simulring?"
+    incrementNum = 0;
+
+    oldDestinationNumbers = getCurrentForwardingDestinations(twilio_number_id)
+
+    for number in new_destination_numbers:
+        voice_URL = voice_URL + "PhoneNumbers%5B" + str(incrementNum) + "%5D=" + number + "&"
+        incrementNum = incrementNum + 1
+
+        if not number in oldDestinationNumbers and self.info['send_sms'] and not number == self.info['contact_list']['ResLife Office']:
+            to_number = "+1" + number.replace("-", "")  # +12316851234
+            message = self.twilio_client.sms.messages.create(to=to_number, from_=self.forwarding_number_obj.friendly_name, body="You are now on duty.")
+
+    voice_URL = voice_URL + "Message=Forwarded%20Call&" + "FailUrl=http://twimlets.com/forward?PhoneNumber=" + failNumber
+    self.forwarding_number_obj.update(voice_url=voice_URL)
