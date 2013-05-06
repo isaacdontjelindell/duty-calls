@@ -4,7 +4,7 @@ Dependencies:
 ---------------
    * `pip install twilio`
    * `pip install python-dateutil`
-   * `pip install icalendar`
+   * `pip install icalendar`   
 
 Setup:
 --------------
