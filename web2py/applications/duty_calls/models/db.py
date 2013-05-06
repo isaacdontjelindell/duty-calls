@@ -44,6 +44,10 @@ from gluon.tools import Auth, Crud, Service, PluginManager, prettydate
 auth = Auth(db)
 crud, service, plugins = Crud(db), Service(), PluginManager()
 
+## extra fields for duty calls
+auth.settings.extra_fields['auth_user'] = [Field('phone','string'), Field('locations','list:string'), Field('sms_on','boolean')]
+
+
 ## create all tables needed by auth if not custom tables
 auth.define_tables(username=False, signature=False)
 

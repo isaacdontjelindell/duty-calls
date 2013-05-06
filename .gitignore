@@ -4,3 +4,4 @@ web2py/applications/duty_calls/private/conf.json
 web2py/httpserver.log
 web2py/httpserver.pid
 google_appengine
+web2py/applications/duty_calls/databases
