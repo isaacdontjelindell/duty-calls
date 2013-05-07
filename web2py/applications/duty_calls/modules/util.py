@@ -10,14 +10,14 @@ import json
 request = current.request
 twilio_client = TwilioRestClient()
 
-def getTwilioNumber(twilio_number_id):
-    return twilio_client.phone_numbers.get(twilio_number_id).friendly_name
+def getTwilioNumber(location):
+    return twilio_client.phone_numbers.get(location['twilio_number_id']).friendly_name
 
-def getCurrentPersonsOnDuty(calendar_url, is_res_life):
+def getCurrentPersonsOnDuty(location):
     on_duty_names = []
     
     try:
-        ics = urllib.urlopen(calendar_url).read()
+        ics = urllib.urlopen(location['calendar_url']).read()
     except:
         logError("Unable to read calendar URL", level="fatal")
 
@@ -41,7 +41,7 @@ def getCurrentPersonsOnDuty(calendar_url, is_res_life):
                 curr_date = datetime.date.today()
                 end_date = end_date - datetime.timedelta(days=1)
 
-                if is_res_life == True:
+                if location['is_res_life'] == True:
                     now_time = datetime.datetime.now().time()
                     #now_time = datetime.time(1,0,0)
                     #now_time = datetime.time(19,20,0)
@@ -61,47 +61,42 @@ def getCurrentPersonsOnDuty(calendar_url, is_res_life):
 
         if start_date <= curr_date <= end_date: # if this event is right now
                 title = str(vevent.get('SUMMARY')) # this will be the title of the event (hopefully  name)
-
                 on_duty_names.append(title)
 
     if len(on_duty_names) == 0:
         on_duty_names.append("ResLife Office")
     return on_duty_names
 
-def getCurrentForwardingDestinations(twilio_number_id): 
+def getCurrentForwardingDestinations(location): 
     #Returns a tuple with the first element a list of simulring numbers
     #curently on call and the second item the fail number string
     current_numbers = []
 
-    split_url = twilio_client.phone_numbers.get(twilio_number_id).voice_url.split("=")
+    split_url = twilio_client.phone_numbers.get(location['twilio_number_id']).voice_url.split("=")
     for part in split_url:
         if str(part).__contains__("-"):
             current_numbers.append(str(part.split("&")[0]))
     fail_number = current_numbers.pop(current_numbers.__len__() - 1)
     return (current_numbers, fail_number)
 
-def update(twilio_number_id, calendar_url, is_res_life, fail_number):
+def update(location):
     ''' checks for changes to the person on duty and makes necessary changes to forwarding info '''
-    curr_forwarding_destinations,failNum = getCurrentForwardingDestinations(twilio_number_id)
+    curr_forwarding_destinations,failNum = getCurrentForwardingDestinations(location)
         
     new_forwarding_destinations = []
 
-    for name in getCurrentPersonsOnDuty(calendar_url, is_res_life):
-        try:
-            new_forwarding_dest = getPhoneNumberForName(name.strip())
-            new_forwarding_destinations.append(new_forwarding_dest)
-        except KeyError, e:
-            logError(e.message)
-            new_forwarding_destinations.append("000-000-0000")
+    for name in getCurrentPersonsOnDuty(location):
+        new_forwarding_dest = getPhoneNumberForName(name.strip())
+        new_forwarding_destinations.append(new_forwarding_dest)
 
     if not curr_forwarding_destinations == new_forwarding_destinations:
-        self.updateForwardingDestinations(new_forwarding_destinations, fail_number)
+        self.updateForwardingDestinations(new_forwarding_destinations, location['fail_number'])
 
-def updateForwardingDestinations(twilio_number_id, new_destination_numbers, fail_number):
+def updateForwardingDestinations(location):
     voice_URL = "http://twimlets.com/simulring?"
     increment_num = 0;
 
-    old_destination_numbers = getCurrentForwardingDestinations(twilio_number_id)
+    old_destination_numbers = getCurrentForwardingDestinations(location)
 
     for number in new_destination_numbers:
         voice_URL = voice_URL + "PhoneNumbers%5B" + str(increment_num) + "%5D=" + number + "&"
@@ -123,11 +118,28 @@ def getPhoneNumberForName(name):
     names = db(q).select()
  
     if len(names) == 0:
-        raise KeyError("Didn't find any user named " + name)
+        logError("Didn't find any user named " + name,
+                 level="fatal")
     elif len(names) > 1:
-        raise KeyError("Found multiple users with the name " + name)
+        logError("Found multiple users with the name " + name,
+                 level="warn")
     else: # should just be 1 name
         return names[0].phone
+
+def getLocationFromName(location_name):
+    db = current.db
+
+    q = db.locations.location_name.like(location_name)
+    locs = db(q).select()
+
+    if len(locs) == 0:
+        logError("Could not find location : " + location_name, 
+                 level="fatal")
+    elif len(locs) > 1:
+        logError("Multiple locations matching location name " + location_name + ". Using first one found.",
+                 level="warn")
+    else: # should be just 1 location
+        return locs[0]
 
 def logError(error, level="warning"):
     # TODO this should notify someone about errors passed to it

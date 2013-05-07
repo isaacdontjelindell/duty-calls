@@ -8,12 +8,12 @@ def display():
     locations = db(q).select()
 
     for loc in locations:
-        duty = util.getCurrentPersonsOnDuty(loc.calendar_url, loc.is_res_life)
+        duty = util.getCurrentPersonsOnDuty(loc)
         print "On duty: " +  str(duty)
 
-        print "Forwarding number: " + util.getTwilioNumber(loc['twilio_number_id'])
+        print "Forwarding number: " + util.getTwilioNumber(loc)
 
-        forwarding_dests = util.getCurrentForwardingDestinations(loc['twilio_number_id'])
+        forwarding_dests = util.getCurrentForwardingDestinations(loc)
         print "Current destinations: " + str(forwarding_dests)
             
     return dict(locations=locations)
