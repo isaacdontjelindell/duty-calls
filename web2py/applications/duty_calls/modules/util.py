@@ -15,8 +15,12 @@ def getTwilioNumber(twilio_number_id):
 
 def getCurrentPersonsOnDuty(calendar_url, is_res_life):
     on_duty_names = []
+    
+    try:
+        ics = urllib.urlopen(calendar_url).read()
+    except:
+        logError("Unable to read calendar URL", level="fatal")
 
-    ics = urllib.urlopen(calendar_url).read()
     ical = Calendar.from_ical(ics)
 
     for vevent in ical.subcomponents:
@@ -83,30 +87,28 @@ def update(twilio_number_id, calendar_url, is_res_life, fail_number):
     new_forwarding_destinations = []
 
     for name in getCurrentPersonsOnDuty(calendar_url, is_res_life):
-        new_person_on_duty = name
-
-        #TODO update this line for DB once the model is built
-        try: 
-            new_forwarding_destinations.append(self.info["contact_list"][new_person_on_duty.strip()])
-        except KeyError:
-            # TODO better handle this error Send AHD a text / email
+        try:
+            new_forwarding_dest = getPhoneNumberForName(name.strip())
+            new_forwarding_destinations.append(new_forwarding_dest)
+        except KeyError, e:
+            logError(e.message)
             new_forwarding_destinations.append("000-000-0000")
 
     if not curr_forwarding_destinations == new_forwarding_destinations:
-        self.updateForwardingDestinations(new_forwarding_destinations, failNum)
+        self.updateForwardingDestinations(new_forwarding_destinations, fail_number)
 
-def updateForwardingDestinations(twilio_number_id,new_destination_numbers, failNumber):
+def updateForwardingDestinations(twilio_number_id, new_destination_numbers, fail_number):
     voice_URL = "http://twimlets.com/simulring?"
-    incrementNum = 0;
+    increment_num = 0;
 
-    oldDestinationNumbers = getCurrentForwardingDestinations(twilio_number_id)
+    old_destination_numbers = getCurrentForwardingDestinations(twilio_number_id)
 
     for number in new_destination_numbers:
-        voice_URL = voice_URL + "PhoneNumbers%5B" + str(incrementNum) + "%5D=" + number + "&"
-        incrementNum = incrementNum + 1
+        voice_URL = voice_URL + "PhoneNumbers%5B" + str(increment_num) + "%5D=" + number + "&"
+        increment_num += 1
 
-        if not number in oldDestinationNumbers and self.info['send_sms'] and not number == self.info['contact_list']['ResLife Office']:
-            to_number = "+1" + number.replace("-", "")  # +12316851234
+        if not number in old_destination_numbers and self.info['send_sms'] and not number == self.info['contact_list']['ResLife Office']:
+            to_number = "+1" + number.replace("-", "")  # must be in format +12316851234
             message = self.twilio_client.sms.messages.create(to=to_number, 
                                                              from_=self.forwarding_number_obj.friendly_name,
                                                              body="You are now on duty.")
@@ -117,16 +119,16 @@ def updateForwardingDestinations(twilio_number_id,new_destination_numbers, failN
 def getPhoneNumberForName(name):
     db = current.db
 
-    q = db.auth_users.nickname == name
+    q = db.auth_user.nicknames.contains(name)
     names = db(q).select()
  
     if len(names) == 0:
-        raiseError("Didn't find any user named " + name)
+        raise KeyError("Didn't find any user named " + name)
     elif len(names) > 1:
-        raiseError("Found multiple users with the name " + name)
+        raise KeyError("Found multiple users with the name " + name)
     else: # should just be 1 name
         return names[0].phone
 
-def raiseError(error):
-    # TODO
-    pass
+def logError(error, level="warning"):
+    # TODO this should notify someone about errors passed to it
+    raise HTTP(500, error)

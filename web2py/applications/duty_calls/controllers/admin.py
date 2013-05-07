@@ -10,9 +10,11 @@ def display():
     for loc in locations:
         duty = util.getCurrentPersonsOnDuty(loc.calendar_url, loc.is_res_life)
         print "On duty: " +  str(duty)
-        loc['twilio_number_str'] = util.getTwilioNumber(loc['twilio_number_id'])
-    
-    print util.getPhoneNumberForName("Isaac DL")
 
+        print "Forwarding number: " + util.getTwilioNumber(loc['twilio_number_id'])
+
+        forwarding_dests = util.getCurrentForwardingDestinations(loc['twilio_number_id'])
+        print "Current destinations: " + str(forwarding_dests)
+            
     return dict(locations=locations)
 
