@@ -1,4 +1,5 @@
 import os
+import json
 
 # this reloads modules (util.py) without having to restart
 # the web2py server.
@@ -8,7 +9,7 @@ from gluon.custom_import import track_changes; track_changes(True)
 
 db.define_table('auth_tokens',
     Field('name','string'),
-    Field('value','string')
+    Field('token_value','string')
 )
 
 db.define_table('locations',
@@ -27,11 +28,11 @@ if not request.env.web2py_runtime_gae:
 else:
     q = db.auth_tokens.name == 'TWILIO_AUTH_TOKEN'
     row = db(q).select()[0]
-    at = row['value']
+    at = row['token_value']
 
     q = db.auth_tokens.name == 'TWILIO_ACCOUNT_SID'
     row = db(q).select()[0]
-    acs = row['value']
+    acs = row['token_value']
 
     os.environ['TWILIO_AUTH_TOKEN'] = at
     os.environ['TWILIO_ACCOUNT_SID'] = acs
