@@ -38,5 +38,3 @@ else:
     os.environ['TWILIO_AUTH_TOKEN'] = at
     os.environ['TWILIO_ACCOUNT_SID'] = acs
 
-# sample contact dict 
-#{"Austen Smith": "319-123-4567", "Isaac DL": "612-978-3683"}
