@@ -8,7 +8,6 @@ import os
 import json
 
 request = current.request
-
 twilio_client = TwilioRestClient()
 
 def getTwilioNumber(twilio_number_id):
@@ -65,7 +64,8 @@ def getCurrentPersonsOnDuty(calendar_url, is_res_life):
         on_duty_names.append("ResLife Office")
     return on_duty_names
 
-def getCurrentForwardingDestinations(twilio_number_id): #Returns a tuple with the first element a list of simulring numbers
+def getCurrentForwardingDestinations(twilio_number_id): 
+    #Returns a tuple with the first element a list of simulring numbers
     #curently on call and the second item the fail number string
     current_numbers = []
 
@@ -76,16 +76,18 @@ def getCurrentForwardingDestinations(twilio_number_id): #Returns a tuple with th
     fail_number = current_numbers.pop(current_numbers.__len__() - 1)
     return (current_numbers, fail_number)
 
-def update(twilio_number_id,calendar_url,is_res_life,fail_number):
+def update(twilio_number_id, calendar_url, is_res_life, fail_number):
     ''' checks for changes to the person on duty and makes necessary changes to forwarding info '''
     curr_forwarding_destinations,failNum = getCurrentForwardingDestinations(twilio_number_id)
         
     new_forwarding_destinations = []
 
-    for name in getCurrentPersonsOnDuty(calendar_url,is_res_life):
+    for name in getCurrentPersonsOnDuty(calendar_url, is_res_life):
         new_person_on_duty = name
-        try:
-            new_forwarding_destinations.append(self.info["contact_list"][new_person_on_duty.strip()])#TODO update this line for DB once the model is built
+
+        #TODO update this line for DB once the model is built
+        try: 
+            new_forwarding_destinations.append(self.info["contact_list"][new_person_on_duty.strip()])
         except KeyError:
             # TODO better handle this error Send AHD a text / email
             new_forwarding_destinations.append("000-000-0000")
@@ -105,7 +107,26 @@ def updateForwardingDestinations(twilio_number_id,new_destination_numbers, failN
 
         if not number in oldDestinationNumbers and self.info['send_sms'] and not number == self.info['contact_list']['ResLife Office']:
             to_number = "+1" + number.replace("-", "")  # +12316851234
-            message = self.twilio_client.sms.messages.create(to=to_number, from_=self.forwarding_number_obj.friendly_name, body="You are now on duty.")
+            message = self.twilio_client.sms.messages.create(to=to_number, 
+                                                             from_=self.forwarding_number_obj.friendly_name,
+                                                             body="You are now on duty.")
 
     voice_URL = voice_URL + "Message=Forwarded%20Call&" + "FailUrl=http://twimlets.com/forward?PhoneNumber=" + failNumber
     self.forwarding_number_obj.update(voice_url=voice_URL)
+
+def getPhoneNumberForName(name):
+    db = current.db
+
+    q = db.auth_users.nickname == name
+    names = db(q).select()
+ 
+    if len(names) == 0:
+        raiseError("Didn't find any user named " + name)
+    elif len(names) > 1:
+        raiseError("Found multiple users with the name " + name)
+    else: # should just be 1 name
+        return names[0].phone
+
+def raiseError(error):
+    # TODO
+    pass

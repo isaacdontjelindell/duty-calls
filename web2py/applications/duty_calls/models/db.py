@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from gluon import current
+
 
 #########################################################################
 ## This scaffolding model makes your app work on Google App Engine too
@@ -45,7 +47,7 @@ auth = Auth(db)
 crud, service, plugins = Crud(db), Service(), PluginManager()
 
 ## extra fields for duty calls
-auth.settings.extra_fields['auth_user'] = [Field('phone','string', required=True), Field('locations','list:reference locations'), Field('sms_on','boolean')]
+auth.settings.extra_fields['auth_user'] = [Field('phone','string', required=True), Field('locations','list:reference locations'), Field('sms_on','boolean'), Field('nicknames','list:string')]
 
 
 ## create all tables needed by auth if not custom tables
@@ -72,6 +74,9 @@ if request.env.web2py_runtime_gae:
 else:
     from gluon.contrib.login_methods.rpx_account import use_janrain
     use_janrain(auth, filename='private/janrain.key')
+
+
+current.db = db
 
 #########################################################################
 ## Define your tables below (or better in another model file) for example

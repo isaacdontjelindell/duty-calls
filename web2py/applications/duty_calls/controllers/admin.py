@@ -11,6 +11,8 @@ def display():
         duty = util.getCurrentPersonsOnDuty(loc.calendar_url, loc.is_res_life)
         print "On duty: " +  str(duty)
         loc['twilio_number_str'] = util.getTwilioNumber(loc['twilio_number_id'])
+    
+    print util.getPhoneNumberForName("Isaac DL")
 
     return dict(locations=locations)
 
