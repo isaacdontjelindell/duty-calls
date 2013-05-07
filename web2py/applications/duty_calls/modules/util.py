@@ -9,23 +9,6 @@ import json
 
 request = current.request
 
-if not request.env.web2py_runtime_gae:
-    conf_path = os.path.join(request.folder,'private','conf.json')
-    with open(conf_path,'r') as f:
-        conf = json.load(f)
-        os.environ['TWILIO_AUTH_TOKEN'] = conf['TWILIO_AUTH_TOKEN']
-        os.environ['TWILIO_ACCOUNT_SID'] = conf['TWILIO_ACCOUNT_SID']
-else:
-    q = db.keys.name == 'TWILIO_AUTH_TOKEN'
-    at = db(q).select()[0]['value']
-    
-    q = db.keys.name == 'TWILIO_ACCOUNT_SID'
-    acs = db(q).select()[0]['value']
-        
-    os.environ['TWILIO_AUTH_TOKEN'] = at
-    os.environ['TWILIO_ACCOUNT_SID'] = acs
-
-
 twilio_client = TwilioRestClient()
 
 def getTwilioNumber(twilio_number_id):

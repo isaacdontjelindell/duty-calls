@@ -13,4 +13,4 @@ def display():
         loc['twilio_number_str'] = util.getTwilioNumber(loc['twilio_number_id'])
 
     return dict(locations=locations)
-        
+
