@@ -57,7 +57,7 @@ def getCurrentPersonsOnDuty(location):
                         curr_date = curr_date - datetime.timedelta(days=1)
                     else:
                         #print "Not between 7pm and 8am"
-                        return ["ResLife Office"]
+                        return location["fail_name"]
 
         if start_date <= curr_date <= end_date: # if this event is right now
                 # this will be the title of the event (hopefully a person's name)
@@ -65,7 +65,7 @@ def getCurrentPersonsOnDuty(location):
                 on_duty_names.append(title)
 
     if len(on_duty_names) == 0:
-        on_duty_names.append("ResLife Office")
+        on_duty_names.append(location['fail_name'])
     return on_duty_names
 
 def getCurrentForwardingDestinations(location): 
@@ -86,8 +86,11 @@ def update(location):
 
     new_persons_on_duty = getCurrentPersonsOnDuty(location)
     for name in new_persons_on_duty:
-        user_row = getUserDataFromName(name.strip())
-        new_forwarding_users.append(user_row)
+        if name == location['fail_name']:
+            new_forwarding_users.append({'phone':location['fail_number'],'sms_on':False})
+        else:
+            user_row = getUserDataFromName(name.strip())
+            new_forwarding_users.append(user_row)
     
     ## update twilio forwarding stuff if necessary ##
     voice_URL = "http://twimlets.com/simulring?"
