@@ -13,4 +13,4 @@ def test():
     print "updated destinations: " + str(util.getCurrentForwardingDestinations(location))
     print ""
     print ""
-    print util.logError("Test message")
+    util.logError("Test message", location)

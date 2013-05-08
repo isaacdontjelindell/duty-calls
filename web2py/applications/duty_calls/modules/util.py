@@ -106,10 +106,10 @@ def update(location):
         # only send SMS notification if they are newly on duty, and only if they want SMS notifications
         if not user['phone'] in old_forwarding_destinations:  
             if user['sms_on']:
-                to_number = "+1" + user['phone'].replace("-", "")  # must be in format +12316851234
+                to_number = "+1" + user['phone'].replace("-", "") # must be in format +12316851234
                 message = twilio_client.sms.messages.create(to=to_number, 
-                                                                from_=getTwilioNumber(location),
-                                                                body="You are now on duty.")
+                                                            from_=getTwilioNumber(location),
+                                                            body="You are now on duty.")
 
     voice_URL += "Message=Forwarded%20Call&" + "FailUrl=http://twimlets.com/forward?PhoneNumber=" + location['fail_number']
     twilio_client.phone_numbers.get(location['twilio_number_id']).update(voice_url=voice_URL)
@@ -142,25 +142,29 @@ def getLocationFromName(location_name):
                  level="fatal")
     elif len(locs) > 1:
         logError("Multiple locations matching location name " + 
-                        location_name + 
-                        ". Using first one found.",
-                  level="warn")
+                        location_name + ". Using first one found.")
     else: # should be just 1 location
         return locs[0]
 
-def logError(error, location=None, level="warning"):
-    # find users that are AHD
+
+def logError(error, location=None, level="warn"):
     if not location is None:
         db = current.db
-        # TODO Lookup group id for AHD group
-        q = (db.auth_membership.group_id == 2) & 
+        
+        # find the AHD group ID. Could hardcode this, but makes it more
+        # portable to search for it.
+        q = db.auth_group.role == "ahd"
+        ahd_group_id = db(q).select()[0].id
+
+        # find all users who have ahd_group_id and are associated with location
+        q = ((db.auth_membership.group_id == ahd_group_id) & 
             (db.auth_membership.user_id == db.auth_user.id) & 
-            (db.auth_user.locations.contains(location['id']))
-
+            (db.auth_user.locations.contains(location['id'])))
         ahd_list = db(q).select()
-
-        print ahd_list[0]['auth_user']['first_name']
-        # TODO send SMS to AHD(s)
+            
+        #print ahd_list[0]['auth_user']['first_name']
+        # TODO SMS/email AHD's and maybe admin's too
+        raise HTTP(500, error)
     else:
         raise HTTP(500, error)
 
