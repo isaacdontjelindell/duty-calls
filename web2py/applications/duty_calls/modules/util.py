@@ -27,7 +27,7 @@ def getCurrentPersonsOnDuty(location):
         if vevent.name != "VEVENT":  # if it's not an event, ignore it
             continue
 
-        start_date = vevent.get('DTSTART').dt #.strftime("%Y-%m-%d")  # .dt is a datetime or date
+        start_date = vevent.get('DTSTART').dt # .dt is a datetime or date
         end_date = vevent.get('DTEND').dt
 
         if isinstance(start_date, datetime.datetime):
@@ -60,7 +60,8 @@ def getCurrentPersonsOnDuty(location):
                         return ["ResLife Office"]
 
         if start_date <= curr_date <= end_date: # if this event is right now
-                title = str(vevent.get('SUMMARY')) # this will be the title of the event (hopefully  name)
+                # this will be the title of the event (hopefully a person's name)
+                title = str(vevent.get('SUMMARY')) 
                 on_duty_names.append(title)
 
     if len(on_duty_names) == 0:
@@ -68,63 +69,59 @@ def getCurrentPersonsOnDuty(location):
     return on_duty_names
 
 def getCurrentForwardingDestinations(location): 
-    #Returns a tuple with the first element a list of simulring numbers
-    #curently on call and the second item the fail number string
     current_numbers = []
 
     split_url = twilio_client.phone_numbers.get(location['twilio_number_id']).voice_url.split("=")
     for part in split_url:
         if str(part).__contains__("-"):
             current_numbers.append(str(part.split("&")[0]))
-    fail_number = current_numbers.pop(current_numbers.__len__() - 1)
-    return (current_numbers, fail_number)
+    return current_numbers
+
 
 def update(location):
     ''' checks for changes to the person on duty and makes necessary changes to forwarding info '''
-    curr_forwarding_destinations,failNum = getCurrentForwardingDestinations(location)
-        
-    new_forwarding_destinations = []
+    ## get numbers for each name on calendar ##
+    old_forwarding_destinations = getCurrentForwardingDestinations(location)
+    new_forwarding_users = []
 
-    for name in getCurrentPersonsOnDuty(location):
-        new_forwarding_dest = getPhoneNumberForName(name.strip())
-        new_forwarding_destinations.append(new_forwarding_dest)
-
-    if not curr_forwarding_destinations == new_forwarding_destinations:
-        self.updateForwardingDestinations(new_forwarding_destinations, location['fail_number'])
-
-def updateForwardingDestinations(location):
+    new_persons_on_duty = getCurrentPersonsOnDuty(location)
+    for name in new_persons_on_duty:
+        user_row = getUserDataFromName(name.strip())
+        new_forwarding_users.append(user_row)
+    
+    ## update twilio forwarding stuff if necessary ##
     voice_URL = "http://twimlets.com/simulring?"
-    increment_num = 0;
-
-    old_destination_numbers = getCurrentForwardingDestinations(location)
-
-    for number in new_destination_numbers:
-        voice_URL = voice_URL + "PhoneNumbers%5B" + str(increment_num) + "%5D=" + number + "&"
+    increment_num = 0
+    for user in new_forwarding_users:
+        # build the TwiML URL from each phone number
+        voice_URL += "PhoneNumbers%5B" + str(increment_num) + "%5D=" + user['phone'] + "&"
         increment_num += 1
+        
+        # only send SMS notification if they are newly on duty, and only if they want SMS notifications
+        if not user['phone'] in old_forwarding_destinations:  
+            if user['sms_on']:
+                to_number = "+1" + user['phone'].replace("-", "")  # must be in format +12316851234
+                message = twilio_client.sms.messages.create(to=to_number, 
+                                                                from_=getTwilioNumber(location),
+                                                                body="You are now on duty.")
 
-        if not number in old_destination_numbers and self.info['send_sms'] and not number == self.info['contact_list']['ResLife Office']:
-            to_number = "+1" + number.replace("-", "")  # must be in format +12316851234
-            message = self.twilio_client.sms.messages.create(to=to_number, 
-                                                             from_=self.forwarding_number_obj.friendly_name,
-                                                             body="You are now on duty.")
+    voice_URL += "Message=Forwarded%20Call&" + "FailUrl=http://twimlets.com/forward?PhoneNumber=" + location['fail_number']
+    twilio_client.phone_numbers.get(location['twilio_number_id']).update(voice_url=voice_URL)
 
-    voice_URL = voice_URL + "Message=Forwarded%20Call&" + "FailUrl=http://twimlets.com/forward?PhoneNumber=" + failNumber
-    self.forwarding_number_obj.update(voice_url=voice_URL)
 
-def getPhoneNumberForName(name):
+def getUserDataFromName(name):
     db = current.db
-
     q = db.auth_user.nicknames.contains(name)
-    names = db(q).select()
- 
-    if len(names) == 0:
+    rows = db(q).select()
+    
+    if len(rows) == 0:
         logError("Didn't find any user named " + name,
                  level="fatal")
-    elif len(names) > 1:
+    elif len(rows) > 1:
         logError("Found multiple users with the name " + name,
                  level="warn")
     else: # should just be 1 name
-        return names[0].phone
+        return rows[0]
 
 def getLocationFromName(location_name):
     db = current.db
