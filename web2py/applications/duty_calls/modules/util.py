@@ -89,7 +89,10 @@ def update(location):
         if name == location['fail_name']:
             new_forwarding_users.append({'phone':location['fail_number'],'sms_on':False})
         else:
-            user_row = getUserDataFromName(name.strip())
+            try:
+                user_row = getUserDataFromName(name.strip())
+            except KeyError, e:
+                logError(e.message, location)
             new_forwarding_users.append(user_row)
     
     ## update twilio forwarding stuff if necessary ##
@@ -118,11 +121,13 @@ def getUserDataFromName(name):
     rows = db(q).select()
     
     if len(rows) == 0:
-        logError("Didn't find any user named " + name,
-                 level="fatal")
+        #logError("Didn't find any user named " + name,
+        #         level="fatal")
+        raise KeyError("Didn't find any user named " + name)
     elif len(rows) > 1:
-        logError("Found multiple users with the name " + name,
-                 level="warn")
+        #logError("Found multiple users with the name " + name,
+        #         level="warn")
+        raise KeyError("Found multiple users with the name " + name)
     else: # should just be 1 name
         return rows[0]
 
@@ -136,11 +141,27 @@ def getLocationFromName(location_name):
         logError("Could not find location : " + location_name, 
                  level="fatal")
     elif len(locs) > 1:
-        logError("Multiple locations matching location name " + location_name + ". Using first one found.",
-                 level="warn")
+        logError("Multiple locations matching location name " + 
+                        location_name + 
+                        ". Using first one found.",
+                  level="warn")
     else: # should be just 1 location
         return locs[0]
 
-def logError(error, level="warning"):
-    # TODO this should notify someone about errors passed to it
-    raise HTTP(500, error)
+def logError(error, location=None, level="warning"):
+    # find users that are AHD
+    if not location is None:
+        db = current.db
+        # TODO Lookup group id for AHD group
+        q = (db.auth_membership.group_id == 2) & 
+            (db.auth_membership.user_id == db.auth_user.id) & 
+            (db.auth_user.locations.contains(location['id']))
+
+        ahd_list = db(q).select()
+
+        print ahd_list[0]['auth_user']['first_name']
+        # TODO send SMS to AHD(s)
+    else:
+        raise HTTP(500, error)
+
+
