@@ -84,25 +84,37 @@ def getCurrentForwardingDestinations(location):
 
 def update(location):
     ''' checks for changes to the person on duty and makes necessary changes to forwarding info '''
+    db = current.db
+
     ## get numbers for each name on calendar ##
     old_forwarding_destinations = getCurrentForwardingDestinations(location)
     new_forwarding_users = []
+    new_forwarding_user_names = []
 
     new_persons_on_duty = getCurrentPersonsOnDuty(location)
+    print new_persons_on_duty # TODO remove
     for name in new_persons_on_duty:
         if name == location['fail_name']:
             new_forwarding_users.append({'phone':location['fail_number'],'sms_on':False})
+            
+            # this will be stored in db: current_on_duty
+            new_forwarding_user_names.append(name)
         else:
             try:
                 user_row = getUserDataFromName(name.strip())
             except KeyError, e:
                 logError(e.message, location)
             new_forwarding_users.append(user_row)
+
+            # save the users names in a list to update the database with: stored in current_on_duty
+            new_forwarding_user_names.append(user['nicknames'][0])
     
     ## update twilio forwarding stuff if necessary ##
     voice_URL = "http://twimlets.com/simulring?"
     increment_num = 0
+
     for user in new_forwarding_users:
+
         # build the TwiML URL from each phone number
         voice_URL += "PhoneNumbers%5B" + str(increment_num) + "%5D=" + user['phone'] + "&"
         increment_num += 1
@@ -117,6 +129,11 @@ def update(location):
 
     voice_URL += "Message=Forwarded%20Call&" + "FailUrl=http://twimlets.com/forward?PhoneNumber=" + location['fail_number']
     twilio_client.phone_numbers.get(location['twilio_number_id']).update(voice_url=voice_URL)
+
+    # update the database with the changed info
+    new_forwarding_destinations = getCurrentForwardingDestinations(location)
+    db(db.locations.id == location['id']).update(current_on_duty=new_forwarding_user_names)
+    db(db.locations.id == location['id']).update(current_forwarding_destinations=new_forwarding_destinations)
 
 
 def getUserDataFromName(name):

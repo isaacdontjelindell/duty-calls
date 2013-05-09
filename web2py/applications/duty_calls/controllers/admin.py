@@ -2,22 +2,21 @@ import util
 
 @auth.requires_membership("admin")
 def display():
-    env = request.env
-    
+    ''' displays all locations in the database '''
     q = db.locations.id > 0
     locations = db(q).select()
-
+     
     for loc in locations:
-        #duty = util.getCurrentPersonsOnDuty(loc)
-        #print "On duty: " +  str(duty)
-
-        #print "Forwarding number: " + util.getTwilioNumber(loc)
-        
-        #forwarding_dests = util.getCurrentForwardingDestinations(loc)
-        #print "Current destinations: " + str(forwarding_dests)
         loc['twilio_number'] = util.getTwilioNumber(loc)
-        loc['on_duty'] = util.getCurrentPersonsOnDuty(loc)
-        loc['forwarding_destinations'] = util.getCurrentForwardingDestinations(loc)        
-            
-    return dict(locations=locations)
 
+    return dict(locations=locations)
+        
+
+def location():
+    args = request.args
+    location_name = args[0]  # TODO add error handling
+
+    location = util.getLocationFromName(location_name)
+
+    location['twilio_number'] = util.getTwilioNumber(location)
+    location['on_duty'] = util.getCurrentPersonsOnDuty(location)

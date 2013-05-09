@@ -47,7 +47,10 @@ auth = Auth(db)
 crud, service, plugins = Crud(db), Service(), PluginManager()
 
 ## extra fields for duty calls
-auth.settings.extra_fields['auth_user'] = [Field('phone','string', required=True), Field('locations','list:reference locations'), Field('sms_on','boolean'), Field('nicknames','list:string')]
+auth.settings.extra_fields['auth_user'] = [Field('phone','string', required=True), 
+                                           Field('locations','list:reference locations'),
+                                           Field('sms_on','boolean'), 
+                                           Field('nicknames','list:string')]
 
 
 ## create all tables needed by auth if not custom tables

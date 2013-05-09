@@ -2,7 +2,7 @@ import util
 
 def display():
     args = request.args
-    location_name = args[0]
+    location_name = args[0]  # TODO add error handling
 
     # TODO: I'm using like() instead of == to provide case-insensitive lookup.
     # PostgreSQL may behave differently than MySQL and SQLite
