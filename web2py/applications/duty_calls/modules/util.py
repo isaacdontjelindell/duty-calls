@@ -92,7 +92,6 @@ def update(location):
     new_forwarding_user_names = []
 
     new_persons_on_duty = getCurrentPersonsOnDuty(location)
-    print new_persons_on_duty # TODO remove
     for name in new_persons_on_duty:
         if name == location['fail_name']:
             new_forwarding_users.append({'phone':location['fail_number'],'sms_on':False})
@@ -106,8 +105,8 @@ def update(location):
                 logError(e.message, location)
             new_forwarding_users.append(user_row)
 
-            # save the users names in a list to update the database with: stored in current_on_duty
-            new_forwarding_user_names.append(user['nicknames'][0])
+            # save the users names in a list to update the database with; stored in current_on_duty
+            new_forwarding_user_names.append(user_row['nicknames'][0])
     
     ## update twilio forwarding stuff if necessary ##
     voice_URL = "http://twimlets.com/simulring?"
