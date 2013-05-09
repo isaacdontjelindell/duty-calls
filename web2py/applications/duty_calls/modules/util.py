@@ -68,13 +68,17 @@ def getCurrentPersonsOnDuty(location):
         on_duty_names.append(location['fail_name'])
     return on_duty_names
 
-def getCurrentForwardingDestinations(location): 
+def getCurrentForwardingDestinations(location):
+    ''' return all forwarding destination numbers, not including the fail number '''
     current_numbers = []
 
-    split_url = twilio_client.phone_numbers.get(location['twilio_number_id']).voice_url.split("=")
+    split_url = twilio_client.phone_numbers.get(location['twilio_number_id']).voice_url.split("&")
     for part in split_url:
-        if str(part).__contains__("-"):
-            current_numbers.append(str(part.split("&")[0]))
+        if "PhoneNumbers" in part:
+            temp = part.split("=")
+            for s in temp:
+                if "-" in s:
+                    current_numbers.append(s.encode('utf8'))
     return current_numbers
 
 
