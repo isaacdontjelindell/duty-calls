@@ -19,3 +19,10 @@ def location():
     print "Updating " + loc.location_name
     print ""
     util.update(location)
+
+def test():
+    nicknames = db(db.auth_user.id == 3).select()[0]['nicknames']
+    #nicknames = ['Austen Smith']
+    nicknames.append('HELLO')
+    db(db.auth_user.id == 3).update(nicknames=nicknames)
+

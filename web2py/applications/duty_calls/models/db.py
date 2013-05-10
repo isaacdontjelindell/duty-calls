@@ -50,7 +50,7 @@ crud, service, plugins = Crud(db), Service(), PluginManager()
 auth.settings.extra_fields['auth_user'] = [Field('phone','string', required=True), 
                                            Field('locations','list:reference locations'),
                                            Field('sms_on','boolean'), 
-                                           Field('nicknames','list:string')]
+                                           Field('nicknames','list:string',compute=lambda r: [r['first_name'] + " " + r['last_name']])]
 
 
 ## create all tables needed by auth if not custom tables
