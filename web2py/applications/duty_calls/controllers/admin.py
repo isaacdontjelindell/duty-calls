@@ -1,22 +1,19 @@
 import util
 
 @auth.requires_membership("admin")
-def display():
-    ''' displays all locations in the database '''
-    q = db.locations.id > 0
-    locations = db(q).select()
-     
-    for loc in locations:
-        loc['twilio_number'] = util.getTwilioNumber(loc)
+def locations():
+    args = request.args
+
+    ## if there is a location specified (e.g. ...location/brandt) ##
+    if len(args) > 0: 
+        location_name = args[0]
+        location = util.getLocationFromName(location_name)
+        locations = [location] # return a list so we can use the same view
+    
+    ## no location specified; show all locations ##
+    else: 
+        q = db.locations.id > 0
+        locations = db(q).select()
 
     return dict(locations=locations)
-        
 
-def location():
-    args = request.args
-    location_name = args[0]  # TODO add error handling
-
-    location = util.getLocationFromName(location_name)
-
-    location['twilio_number'] = util.getTwilioNumber(location)
-    location['on_duty'] = util.getCurrentPersonsOnDuty(location)

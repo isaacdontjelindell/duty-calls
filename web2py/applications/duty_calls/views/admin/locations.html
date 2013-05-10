@@ -1,0 +1,40 @@
+{{extend 'layout.html'}}
+
+
+{{if len(locations) == 1:
+    location=locations[0]
+}}
+    <h1><small>{{=locations[0].location_name}}</small></h1>
+
+    Forwarding Number: {{=location.twilio_number}}<br>
+    Currently On Duty: {{=location.current_on_duty}}<br>
+    Current Forwarding Destinations: {{=location.current_forwarding_destinations}}<br>
+    Fail Name: {{=location.fail_name}}<br>
+    Fail Number: {{=location.fail_number}}<br>
+    Is Res Life: {{=location.is_res_life}}<br>
+{{else:}}
+    <h1>Locations</h1>
+
+    <table>
+        <tr>
+            <td>Name</td>
+            <td>Forwarding Number</td>
+            <td>Currently On Duty</td>
+            <td>Forwarding Destinations</td>
+            <td>Fail Name</td>
+            <td>Fail Number</td>
+            <td>Is Res Life?</td>
+        </tr>
+        {{for loc in locations:}}
+            <tr>
+                <td><a href='locations/{{=loc.location_name}}'>{{=loc.location_name}}</a></td>
+                <td>{{=loc.twilio_number}}</td>
+                <td>{{=loc.current_on_duty}}</td>
+                <td>{{=loc.current_forwarding_destinations}}</td>
+                <td>{{=loc.fail_name}}</td>
+                <td>{{=loc.fail_number}}</td>
+                <td>{{=loc.is_res_life}}</td>
+            </tr>
+        {{pass}}
+    </table>
+{{pass}}
