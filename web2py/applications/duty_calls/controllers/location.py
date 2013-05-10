@@ -20,7 +20,8 @@ def display():
 
     #TODO get ahd id dynamically
 
-    ahd_group_id = 2
+    q = db.auth_group.role == "ahd"
+    ahd_group_id = db(q).select()[0].id
 
     q = ((db.auth_membership.group_id == ahd_group_id) & 
         (db.auth_membership.user_id == db.auth_user.id) & 
