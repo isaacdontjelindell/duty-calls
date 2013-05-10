@@ -167,6 +167,13 @@ def getLocationFromName(location_name):
         return locs[0]
 
 
+def getUsersForLocation(location_row):
+    db = current.db
+
+    q = db.auth_user.locations.contains(location_row.id)
+    users = db(q).select()
+    return users
+
 def logError(error, location=None, level="warn"):
     if not location is None:
         db = current.db

@@ -11,7 +11,29 @@
     Current Forwarding Destinations: {{=location.current_forwarding_destinations}}<br>
     Fail Name: {{=location.fail_name}}<br>
     Fail Number: {{=location.fail_number}}<br>
-    Is Res Life: {{=location.is_res_life}}<br>
+    Is Res Life: {{=location.is_res_life}}<br><br>
+    
+    <table>
+        <tr>
+            <td>Select:</td>
+            <td>Name:</td>
+            <td>Phone:</td>
+            <td>Email:</td>
+        </tr>
+        <form name='remove_users' method=POST action='{{=location.location_name}}/remove'>
+            {{ for user in users: }}
+                <tr>
+                    <td><input type='checkbox' name='remove_ids' value='{{=user.id}}'>
+                    <td>{{=user.first_name}} {{=user.last_name}}</td>
+                    <td>{{=user.phone}}</td>
+                    <td>{{=user.email}}</td>
+                </tr>
+            {{ pass }}
+    </table>
+        <input type='submit' value='Remove selected users'>
+        </form>
+        
+
 {{else:}}
     <h1>Locations</h1>
 
