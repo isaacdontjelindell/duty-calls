@@ -1,0 +1,31 @@
+{{extend 'layout.html'}}
+
+{{ if location: }}
+    <h1><small>{{ =location.location_name}}</small></h1>
+{{ else: }}
+    <h1><small>All Users</small></h1>
+{{ pass }}
+
+
+<table>
+    <tr>
+        <td>Name:</td>
+        <td>Email:</td>
+        <td>Phone:</td>
+        <td>SMS Notifications:</td>
+        <td>Locations:</td>
+    </tr>
+    
+    {{ for user in users: }}
+        <tr>
+            <td>{{ =user.first_name + " " + user.last_name }}</td>
+            <td>{{ =user.email }}</td>
+            <td>{{ =user.phone }}</td>
+            <td>{{ =user.sms_on }}</td>
+            <td>{{ =user.locations }}</td>  <!-- TODO lookup location name from reference ID -->
+        </tr>
+    {{ pass }}
+
+</table>
+
+

@@ -27,7 +27,7 @@
         </tr>
         {{for loc in locations:}}
             <tr>
-                <td><a href='locations/{{=loc.location_name}}'>{{=loc.location_name}}</a></td>
+                <td><a href='{{=loc.location_name}}'>{{=loc.location_name}}</a></td>
                 <td>{{=loc.twilio_number}}</td>
                 <td>{{=loc.current_on_duty}}</td>
                 <td>{{=loc.current_forwarding_destinations}}</td>
