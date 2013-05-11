@@ -1,4 +1,4 @@
-function populateUsers(loc_name) {
+function populateAllUsers(loc_name) {
     $.getJSON('/duty_calls/json/users.json', function(data) {
         var items = [];
         var list = $("#add-user-list")
