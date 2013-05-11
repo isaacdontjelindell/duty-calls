@@ -54,6 +54,7 @@ def locations():
             removeUser(location_name)
         
         # redirect back to the location interface after add/remove user
+        # This is equivalent to "raise HTTP(301, 'Redirect')"
         redirect(URL('locations', args=(location_name)))
 
 
