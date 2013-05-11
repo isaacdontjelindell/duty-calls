@@ -2,13 +2,9 @@ def users():
     q = db.auth_user.id > 0
     user_rows = db(q).select()
 
-    users = {}
+    users = {'aaData':[]}
 
     for row in user_rows:
-        users[row.id] = {}
-
-        users[row.id]['name'] = row['first_name'] + " " + row['last_name']
-        users[row.id]['phone'] = row['phone']
-        users[row.id]['email'] = row['email']
-
-    return dict(users=users)
+        user = [row.first_name + " " + row.last_name, row.phone, row.email, row.id]
+        users['aaData'].append(user)
+    return dict(users)

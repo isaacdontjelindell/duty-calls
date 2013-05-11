@@ -33,3 +33,20 @@ function populateAllUsers(loc_name) {
         list.html(html);
     });
 }
+
+var user_table;   
+function toggleAddUser(loc_name) {
+        
+    $('#add-user-div').toggle();
+    
+    if (!user_table) {
+        user_table = $('#add-user-list').dataTable( {
+            "bProcessing": true,
+            "sAjaxSource": '/duty_calls/json/users.json',
+        });
+
+        $('#add-user-list tbody').on( 'click', 'tr', function () {
+            $(this).toggleClass('row_selected');
+        } );
+    }
+}
