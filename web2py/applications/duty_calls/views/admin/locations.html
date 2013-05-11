@@ -1,7 +1,7 @@
 {{extend 'layout.html'}}
 
-
-{{if len(locations) == 1:
+<!-- Show specific location -->
+{{ if len(locations) == 1:
     location=locations[0]
 }}
     <h1><small>{{=locations[0].location_name}}</small></h1>
@@ -13,28 +13,36 @@
     Fail Number: {{=location.fail_number}}<br>
     Is Res Life: {{=location.is_res_life}}<br><br>
     
-    <table>
-        <tr>
-            <td>Select:</td>
-            <td>Name:</td>
-            <td>Phone:</td>
-            <td>Email:</td>
-        </tr>
-        <form name='remove_users' method=POST action='{{=location.location_name}}/remove'>
-            {{ for user in users: }}
-                <tr>
-                    <td><input type='checkbox' name='remove_ids' value='{{=user.id}}'>
-                    <td>{{=user.first_name}} {{=user.last_name}}</td>
-                    <td>{{=user.phone}}</td>
-                    <td>{{=user.email}}</td>
-                </tr>
-            {{ pass }}
-    </table>
+    <form name='remove_users' method=POST action='{{=location.location_name}}/remove'>
+    
+        <table>
+            <tr>
+                <td>Select:</td>
+                <td>Name:</td>
+                <td>Phone:</td>
+                <td>Email:</td>
+            </tr>
+                {{ for user in users: }}
+                    <tr>
+                        <td><input type='checkbox' name='remove_ids' value='{{=user.id}}'>
+                        <td>{{=user.first_name}} {{=user.last_name}}</td>
+                        <td>{{=user.phone}}</td>
+                        <td>{{=user.email}}</td>
+                    </tr>
+                {{ pass }}
+        </table>
         <input type='submit' value='Remove selected users'>
-        </form>
-        
+    </form>
+    
+    <hr>
+    <form name='dummy-form'>
+        <input type='button' onclick="populateUsers('{{=location.location_name}}')" value='Add Users'>
+    </form>
+    <div id='add-user-list'></div>
 
-{{else:}}
+
+<!-- Show all locations -->
+{{ else: }}
     <h1>Locations</h1>
 
     <table>
