@@ -79,3 +79,9 @@ def users():
     users = db(q).select()
     return dict(users=users, location=location)
 
+<<<<<<< HEAD
+=======
+def addLocation():
+    
+    return dict()
+>>>>>>> nothing useful
