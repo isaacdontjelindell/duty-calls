@@ -21,7 +21,6 @@
                 <td>Name:</td>
                 <td>Phone:</td>
                 <td>Email:</td>
-                <td style="visiblity:hidden;">ID:</td>
             </tr>
                 {{ for user in users: }}
                     <tr>
@@ -38,7 +37,7 @@
     <hr>
 
     <form name='dummy-form'>
-        <input type='button' onclick="toggleAddUser('{{=location.location_name}}')" value='Add Users'>
+        <a href='#' onclick="toggleAddUser('{{=location.location_name}}')">+Add Users to this Location</a>
     </form>
     <div id='add-user-div' style='display:none;'>
         <table id='add-user-list'>
@@ -50,8 +49,8 @@
             </tr></thead>
             <tbody>
             </tbody>
-        </table>
-        <form name='add_users' method=POST action='{{=location.location_name}}/add'>
+        </table><br><br>
+        <form name='add_users' id='add_users' onsubmit='addSelectedUsers();' method=POST action='{{=location.location_name}}/add'>
             <input type='submit' value='Add Selected Users'>
         </form>
     </div>

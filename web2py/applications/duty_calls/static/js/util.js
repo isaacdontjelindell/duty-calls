@@ -1,7 +1,6 @@
 
 var add_user_table;   
 function toggleAddUser(loc_name) {
-        
     $('#add-user-div').toggle();
     
     if (!add_user_table) {
@@ -19,13 +18,15 @@ function toggleAddUser(loc_name) {
     }
 }
 
-function getAddUserTableSelectedUserIds() {
+function addSelectedUsers() {
     selected_rows = add_user_table.$('tr.row_selected');
-    user_ids = []
+    form = $('#add_users')
     for(var i=0; i<selected_rows.length; i++) {
         var position = add_user_table.fnGetPosition(selected_rows[i]);
         var uid = add_user_table.fnGetData(position)[3];
-        user_ids.push(uid);       
+        form.append("<input type='checkbox' name='add_ids' value='" + uid + "' checked>");
     }
-    return user_ids
+    return true;
 }
+
+$('#add_users').submit(addSelectedUsers);
