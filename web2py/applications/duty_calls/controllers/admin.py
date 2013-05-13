@@ -75,8 +75,11 @@ def locations():
         # /%location_name%/remove
         elif action == "remove":
             removeUser(location_name)
-            
-        # redirect back to the location interface after remove user
+        
+        elif action == "update":
+            update(location_name)  # TODO need to implement this!
+
+        # redirect back to the location interface after changing stuff
         # This is equivalent to "raise HTTP(301, 'Redirect')"
         redirect(URL('locations', args=(location_name)))
         
