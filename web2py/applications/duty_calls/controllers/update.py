@@ -5,8 +5,6 @@ def all():
     locations = db(q).select()
 
     for loc in locations:
-        print "Updating " + loc.location_name
-        print ""
         util.update(loc)
         
 

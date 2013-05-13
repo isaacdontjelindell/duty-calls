@@ -1,1 +1,3 @@
 #crontab
+
+*/2  *  *  *  *  root *update/all
