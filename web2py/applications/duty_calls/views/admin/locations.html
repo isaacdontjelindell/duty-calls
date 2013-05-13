@@ -13,27 +13,20 @@
     Fail Number: {{=location.fail_number}}<br>
     Is Res Life: {{=location.is_res_life}}<br><br>
     
-    <form name='remove_users' method=POST action='{{=location.location_name}}/remove'>
-    
-        <table>
-            <tr>
-                <td></td>
-                <td>Name:</td>
-                <td>Phone:</td>
-                <td>Email:</td>
-            </tr>
-                {{ for user in users: }}
-                    <tr>
-                        <td><input type='checkbox' name='remove_ids' value='{{=user.id}}'>
-                        <td>{{=user.first_name}} {{=user.last_name}}</td>
-                        <td>{{=user.phone}}</td>
-                        <td>{{=user.email}}</td>
-                    </tr>
-                {{ pass }}
-        </table>
+    User List: <br><br>
+    <table id='remove-user-list'>
+        <thead><tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>ID</th>
+        </tr></thead>
+        <tbody>
+        </tbody>
+    </table><br><br>
+    <form name='remove_users'id='remove_users' onsubmit='removeSelectedUsers();' method=POST action='{{=location.location_name}}/remove'>
         <input type='submit' value='Remove selected users'>
     </form>
-    
     <hr>
 
     <form name='dummy-form'>
@@ -54,7 +47,12 @@
             <input type='submit' value='Add Selected Users'>
         </form>
     </div>
-
+        
+    <script type='text/javascript'>
+        // ajax call to load the user table
+        showRemoveUserTable('{{=location.location_name}}');
+    </script>
+        
 <!-- Show all locations -->
 {{ else: }}
     <h1>Locations</h1>
@@ -72,7 +70,8 @@
         {{for loc in locations:}}
             <tr>
                 <td><a href='/duty_calls/admin/locations/{{=loc.location_name}}'>{{=loc.location_name}}</a></td>
-                <td>{{=loc.twilio_number}}</td>
+    
+    <td>{{=loc.twilio_number}}</td>
                 <td>{{=loc.current_on_duty}}</td>
                 <td>{{=loc.current_forwarding_destinations}}</td>
                 <td>{{=loc.fail_name}}</td>

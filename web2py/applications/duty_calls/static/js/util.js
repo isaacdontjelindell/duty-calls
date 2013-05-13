@@ -29,4 +29,29 @@ function addSelectedUsers() {
     return true;
 }
 
-$('#add_users').submit(addSelectedUsers);
+var remove_user_table;
+function showRemoveUserTable(loc_name) {
+    remove_user_table = $('#remove-user-list').dataTable( {
+        "bProcessing": true,
+        "sAjaxSource": '/duty_calls/json/loc_users.json/'+loc_name,
+        "aoColumnDefs": [
+            { "bSearchable": false, "bVisible": false, "aTargets": [ 3 ] }
+        ]
+    });
+
+    $('#remove-user-list tbody').on( 'click', 'tr', function () {
+        $(this).toggleClass('row_selected');
+    } );
+}
+
+function removeSelectedUsers() {
+    selected_rows = remove_user_table.$('tr.row_selected');
+    form = $('#remove_users');
+    for(var i=0; i<selected_rows.length; i++) {
+        var position = remove_user_table.fnGetPosition(selected_rows[i]);
+        var uid = remove_user_table.fnGetData(position)[3]; // get the uid of the user to be removed
+        console.log("UID:" + uid); // TODO remove
+        form.append("<input type='checkbox' name='remove_ids' value='" + uid + "' checked>");
+    }
+    return true;
+}

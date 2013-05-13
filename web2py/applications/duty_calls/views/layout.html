@@ -38,7 +38,6 @@
   <!-- All JavaScript at the bottom, except for Modernizr which enables
        HTML5 elements & feature detects -->
   <script src="{{=URL('static','js/modernizr.custom.js')}}"></script>
-
   <!-- include stylesheets -->
   {{  
   response.files.append(URL('static','css/web2py.css'))
@@ -49,6 +48,10 @@
   }}
 
   {{include 'web2py_ajax.html'}}
+  <script src="{{=URL('static','js/bootstrap.min.js')}}"></script>
+  <script src="{{=URL('static','js/web2py_bootstrap.js')}}"></script>
+  <script src="{{=URL('static','js/util.js')}}"></script>
+  <script src="{{=URL('static','plugin_datatables/js/jquery.dataTables.js')}}"></script>
 
   {{
   # using sidebars need to know what sidebar you want to use
@@ -150,10 +153,6 @@
 
   <!-- The javascript =============================================
        (Placed at the end of the document so the pages load faster) -->
-  <script src="{{=URL('static','js/bootstrap.min.js')}}"></script>
-  <script src="{{=URL('static','js/web2py_bootstrap.js')}}"></script>
-  <script src="{{=URL('static','js/util.js')}}"></script>
-  <script src="{{=URL('static','plugin_datatables/js/jquery.dataTables.js')}}"></script>
   <!--[if lt IE 7 ]>
       <script src="{{=URL('static','js/dd_belatedpng.js')}}"></script>
       <script> DD_belatedPNG.fix('img, .png_bg'); //fix any <img> or .png_bg background-images </script>
