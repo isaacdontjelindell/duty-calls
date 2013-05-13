@@ -6,7 +6,8 @@ def all():
 
     for loc in locations:
         util.update(loc)
-        
+    
+    db.commit()
 
 def location():
     args = request.args
