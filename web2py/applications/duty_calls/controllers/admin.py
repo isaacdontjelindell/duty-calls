@@ -129,6 +129,15 @@ def users():
 def addLocationProcess(form):
     twilio_number_id = form.vars.twilio_number_id
     cal_URL = form.vars.calendar_url
+<<<<<<< HEAD
+=======
+    #try:
+    #    util.getTwilioNumber(twilio_number)
+    #except TwilioRestException:
+    if(cal_URL != "test"):
+        form.errors.twilio_number_id = "Invalid number_ID"
+
+>>>>>>> try catch edit
     #TODO define test cases to check valid calender URL and Twilio ID
     
 @auth.requires_membership("admin")
