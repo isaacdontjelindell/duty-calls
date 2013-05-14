@@ -89,7 +89,7 @@ function editInfo(loc_name) {
         span_is_rl.innerHTML = "Is Res Life? ";
         var input_is_rl = document.createElement("input"); 
         input_is_rl.setAttribute('type',"checkbox");
-        input_is_rl.setAttribute('is_res_life',"fail_num");
+        input_is_rl.setAttribute('name',"is_res_life");
         input_is_rl.setAttribute('value', "true");
         if (is_rl) {
             input_is_rl.setAttribute('checked',"true");

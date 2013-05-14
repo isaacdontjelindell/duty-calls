@@ -17,6 +17,27 @@ def locations():
         locations = db(q).select()
         return locations
     
+    def update_info(location_name):
+        post_vars = request.post_vars
+        fail_name = post_vars['fail_name']
+        fail_num = post_vars['fail_num']
+        forwarding_id = post_vars['forwarding_id']
+        calendar_url = post_vars['calendar_url']
+
+        if 'is_res_life' in post_vars:
+            is_res_life = True
+        else:
+            is_res_life = False
+
+        location = util.getLocationFromName(location_name)
+        
+        location.fail_name = fail_name
+        location.fail_number = fail_num
+        location.is_res_life = is_res_life
+        location.twilio_number_id = forwarding_id
+        location.calendar_url = calendar_url
+        location.update_record() # persist the changes in the DB
+
     def removeUser(location_name):
         ## remove the user ids from the POST from location_name ##
         post_vars = request.post_vars
@@ -77,7 +98,7 @@ def locations():
             removeUser(location_name)
         
         elif action == "update":
-            update(location_name)  # TODO need to implement this!
+            update_info(location_name)  # TODO need to implement this!
 
         # redirect back to the location interface after changing stuff
         # This is equivalent to "raise HTTP(301, 'Redirect')"
