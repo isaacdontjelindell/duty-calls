@@ -32,6 +32,12 @@ else:
     ## from gluon.contrib.memdb import MEMDB
     ## from google.appengine.api.memcache import Client
     ## session.connect(request, response, db = MEMDB(Client()))
+
+    db.define_table('auth_tokens',
+        Field('name','string'),
+        Field('token_value','string')
+    )
+
     q = db.auth_tokens.name == 'TWILIO_AUTH_TOKEN'
     row = db(q).select()[0]
     at = row['token_value']
