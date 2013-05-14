@@ -126,6 +126,25 @@ def users():
     users = db(q).select()
     return dict(users=users, location=location)
 
-def addLocation():
+def addLocationProcess(form):
+    twilio_number = form.vars.twilio_number_id
+    cal_URL = form.vars.calendar_url
+    try:
+        util.getTwilioNumber(twilio_number)
+    except TwilioRestException:
+        form.errors.twilio_number_id = "Invalid number_ID"
+
+    #TODO define test cases to check valid calender URL and Twilio ID
     
-    return dict()
+@auth.requires_membership("admin")
+def addLocationForm():
+    form = SQLFORM(db.locations, 
+        fields = ['location_name', 'calendar_url','twilio_number_id','is_res_life','fail_name','fail_number'],
+        labels = {'location_name':'Location Name','calendar_url':'Google Calender URL (iCal)','fail_name':"Default Forward Location",'fail_number':'Default Forward Number'},
+        col3 = {'is_res_life':'Interprets all day events as 7pm to 8am Duty Events','twilio_number_id':'Obtained from Twilio number URL'})
+    form
+    if form.process(onvalidiaiton=addLocationProcess).accepted:
+        session.flash = "Location Added"
+        redirect(URL('locations'))
+    #redirect(URL('locations',args=(new_location_name)))
+    return dict(form=form)
