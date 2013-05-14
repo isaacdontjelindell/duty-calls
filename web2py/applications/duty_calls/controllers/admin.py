@@ -137,7 +137,7 @@ def addLocation():
         fields = ['location_name', 'calendar_url','twilio_number_id','is_res_life','fail_name','fail_number'],
         labels = {'location_name':'Location Name','calendar_url':'Google Calender URL (iCal)','fail_name':"Default Forward Location",'fail_number':'Default Forward Number'},
         col3 = {'is_res_life':'Interprets all day events as 7pm to 8am Duty Events','twilio_number_id':'Obtained from Twilio number URL'})
-    if form.process().accepted:
+    if form.process(onvalidation=addLocationProcess).accepted:
         response.flash = "Location Added"
         redirect(URL('locations'))
     elif form.errors:
