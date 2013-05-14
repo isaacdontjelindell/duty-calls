@@ -33,21 +33,21 @@ else:
     ## from google.appengine.api.memcache import Client
     ## session.connect(request, response, db = MEMDB(Client()))
 
-    db.define_table('auth_tokens',
-        Field('name','string'),
-        Field('token_value','string')
-    )
+db.define_table('auth_tokens',
+    Field('name','string'),
+    Field('token_value','string')
+)
 
-    q = db.auth_tokens.name == 'TWILIO_AUTH_TOKEN'
-    row = db(q).select()[0]
-    at = row['token_value']
+q = db.auth_tokens.name == 'TWILIO_AUTH_TOKEN'
+row = db(q).select()[0]
+at = row['token_value']
 
-    q = db.auth_tokens.name == 'TWILIO_ACCOUNT_SID'
-    row = db(q).select()[0]
-    acs = row['token_value']
+q = db.auth_tokens.name == 'TWILIO_ACCOUNT_SID'
+row = db(q).select()[0]
+acs = row['token_value']
 
-    os.environ['TWILIO_AUTH_TOKEN'] = at
-    os.environ['TWILIO_ACCOUNT_SID'] = acs
+os.environ['TWILIO_AUTH_TOKEN'] = at
+os.environ['TWILIO_ACCOUNT_SID'] = acs
 
 
 ## by default give a view/generic.extension to all actions from localhost
