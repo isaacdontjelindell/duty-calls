@@ -78,8 +78,16 @@
                 <td><a href='/duty_calls/admin/locations/{{=loc.location_name}}'>{{=loc.location_name}}</a></td>
     
     <td>{{=loc.twilio_number}}</td>
-                <td>{{=loc.current_on_duty}}</td>
-                <td>{{=loc.current_forwarding_destinations}}</td>
+                <td>
+                    {{ for name in loc.current_on_duty: }}
+                        {{ =name }}, 
+                    {{ pass }}
+                </td>
+                <td>
+                    {{ for num in loc.current_forwarding_destinations: }}
+                        {{ =num }},
+                    {{ pass }}
+                </td>
                 <td>{{=loc.fail_name}}</td>
                 <td>{{=loc.fail_number}}</td>
                 <td>{{=loc.is_res_life}}</td>

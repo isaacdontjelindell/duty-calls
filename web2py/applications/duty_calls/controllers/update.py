@@ -1,4 +1,5 @@
 import util
+from google.appengine.api import users
 
 def all():
     q = db.locations.id > 0
@@ -20,8 +21,5 @@ def location():
     util.update(location)
 
 def test():
-    nicknames = db(db.auth_user.id == 3).select()[0]['nicknames']
-    #nicknames = ['Austen Smith']
-    nicknames.append('HELLO')
-    db(db.auth_user.id == 3).update(nicknames=nicknames)
-
+    user = users.get_current_user()
+    return user.nickname()
