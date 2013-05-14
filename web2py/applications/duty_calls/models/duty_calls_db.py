@@ -16,6 +16,6 @@ db.define_table('locations',
     Field('is_res_life','boolean'),
     Field('fail_name','string'),
     Field('fail_number','string'),
-    Field('current_on_duty','list:string'),
-    Field('current_forwarding_destinations','list:string')
+    Field('current_on_duty','list:string', default=""),
+    Field('current_forwarding_destinations','list:string', default="")
 )
