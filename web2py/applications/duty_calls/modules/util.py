@@ -154,7 +154,8 @@ def getUserDataFromName(name):
 def getLocationFromName(location_name):
     db = current.db
 
-    q = db.locations.location_name.like(location_name)
+    #q = db.locations.location_name.like(location_name)
+    q = like_query(location_name, db.locations.location_name)
     locs = db(q).select()
 
     if len(locs) == 0:
@@ -165,6 +166,16 @@ def getLocationFromName(location_name):
                         location_name + ". Using first one found.")
     else: # should be just 1 location
         return locs[0]
+
+def like_query(term, field):
+    """Receives term and field to query, then returns the query to be performed
+       This is a nasty hack needed because GAE BigTable doesn't support .like()
+    """
+    queryStart = term.decode('utf-8')
+    queryEnd = queryStart+"\xEF\xBF\xBD".decode('utf-8')
+    query =((field>=queryStart) & (field<=queryEnd))
+    return query
+ 
 
 
 def getUsersForLocation(location_row):
