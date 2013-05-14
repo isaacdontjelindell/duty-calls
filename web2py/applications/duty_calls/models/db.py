@@ -16,11 +16,6 @@ if not request.env.web2py_runtime_gae:
     ## if NOT running on Google App Engine use SQLite or other DB
     db = DAL('sqlite://storage.sqlite',pool_size=1,check_reserved=['all'])
     
-    conf_path = os.path.join(request.folder,'private','conf.json')
-    with open(conf_path,'r') as f:
-        conf = json.load(f)
-        os.environ['TWILIO_AUTH_TOKEN'] = conf['TWILIO_AUTH_TOKEN']
-        os.environ['TWILIO_ACCOUNT_SID'] = conf['TWILIO_ACCOUNT_SID']
 
 
 else:
@@ -33,21 +28,30 @@ else:
     ## from google.appengine.api.memcache import Client
     ## session.connect(request, response, db = MEMDB(Client()))
 
+
 db.define_table('auth_tokens',
     Field('name','string'),
     Field('token_value','string')
 )
 
-q = db.auth_tokens.name == 'TWILIO_AUTH_TOKEN'
-row = db(q).select()[0]
-at = row['token_value']
+if not request.env.web2py_runtime_gae:
+    conf_path = os.path.join(request.folder,'private','conf.json')
+    with open(conf_path,'r') as f:
+        conf = json.load(f)
+        os.environ['TWILIO_AUTH_TOKEN'] = conf['TWILIO_AUTH_TOKEN']
+        os.environ['TWILIO_ACCOUNT_SID'] = conf['TWILIO_ACCOUNT_SID']
 
-q = db.auth_tokens.name == 'TWILIO_ACCOUNT_SID'
-row = db(q).select()[0]
-acs = row['token_value']
+else:
+    q = db.auth_tokens.name == 'TWILIO_AUTH_TOKEN'
+    row = db(q).select()[0]
+    at = row['token_value']
 
-os.environ['TWILIO_AUTH_TOKEN'] = at
-os.environ['TWILIO_ACCOUNT_SID'] = acs
+    q = db.auth_tokens.name == 'TWILIO_ACCOUNT_SID'
+    row = db(q).select()[0]
+    acs = row['token_value']
+
+    os.environ['TWILIO_AUTH_TOKEN'] = at
+    os.environ['TWILIO_ACCOUNT_SID'] = acs
 
 
 ## by default give a view/generic.extension to all actions from localhost
