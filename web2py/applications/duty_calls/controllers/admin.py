@@ -137,7 +137,7 @@ def addLocationProcess(form):
     #TODO define test cases to check valid calender URL and Twilio ID
     
 @auth.requires_membership("admin")
-def addLocationForm():
+def addLocation():
     form = SQLFORM(db.locations, 
         fields = ['location_name', 'calendar_url','twilio_number_id','is_res_life','fail_name','fail_number'],
         labels = {'location_name':'Location Name','calendar_url':'Google Calender URL (iCal)','fail_name':"Default Forward Location",'fail_number':'Default Forward Number'},
