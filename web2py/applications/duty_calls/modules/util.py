@@ -13,9 +13,6 @@ twilio_client = TwilioRestClient()
 def getTwilioNumber(location):
     return twilio_client.phone_numbers.get(location['twilio_number_id']).friendly_name
 
-def getTwilioNumber(twilio_number_id):
-    return twilio_client.phone_numbers.get(twilio_number_id).friendly_name
-
 def getCurrentPersonsOnDuty(location):
     on_duty_names = []
     
