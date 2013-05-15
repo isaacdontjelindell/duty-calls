@@ -163,3 +163,21 @@ def addLocation():
     elif form.errors:
         response.flash = "Errors!"
     return dict(form=form)
+
+def removeLocation(locationNames):
+    ## remove the location
+    post_vars = request.post_vars
+    remove_user_ids = post_vars['remove_ids']
+    if not remove_user_ids:
+        return
+
+    location_id = util.getLocationFromName(location_name).id
+    for remove_user_id in remove_user_ids:
+        user = db(db.auth_user.id == remove_user_id).select()[0]
+
+        # get the list of locations the user is currently associated with
+        user_locs = user.locations
+        
+        # remove this location from the user's locations list
+        user_locs = user_locs.remove(long(location_id)) 
+        user.update_record(locations=user_locs)
