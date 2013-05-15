@@ -1,5 +1,4 @@
 import util
-from google.appengine.api import users
 
 def all():
     q = db.locations.id > 0
@@ -20,6 +19,3 @@ def location():
     print ""
     util.update(location)
 
-def test():
-    user = users.get_current_user()
-    return user.nickname()
