@@ -107,7 +107,7 @@ def locations():
     return dict(locations=locations, users=users)
 
 
-@auth.requires_membership("ahd")
+@auth.requires_membership("ahd","admin")
 def users():
     args = request.args
 

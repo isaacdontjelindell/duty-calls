@@ -62,7 +62,8 @@
         
 <!-- Show all locations -->
 {{ else: }}
-    <h1>Locations</h1><a href="/duty_calls/admin/addLocation">(+Add New Location)</a>
+    <h1>Locations</h1><a href="/duty_calls/admin/addLocation">(+Add New Location)</a><br>
+    <a href = "/duty_calls/admin/users">(Manage Users)</a>
     <form name='remove_location' id='remove_location' method=POST action='/duty_calls/admin/removeLocation'>
     <table>
         <tr>
