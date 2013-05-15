@@ -63,9 +63,10 @@
 <!-- Show all locations -->
 {{ else: }}
     <h1>Locations</h1><a href="/duty_calls/admin/addLocation">(+Add New Location)</a>
+    <form name='remove_location' id='remove_location' method=POST action='/duty_calls/admin/removeLocation'>
     <table>
-        
         <tr>
+            <td></td>
             <td>Name</td>
             <td>Forwarding Number</td>
             <td>Currently On Duty</td>
@@ -76,6 +77,7 @@
         </tr>
         {{for loc in locations:}}
             <tr>
+                <td><input type='checkbox' name='remove_ids' value={{=loc.id}}></td>
                 <td><a href='/duty_calls/admin/locations/{{=loc.location_name}}'>{{=loc.location_name}}</a></td>
     
     <td>{{=loc.twilio_number}}</td>
@@ -95,4 +97,5 @@
             </tr>
         {{pass}}
     </table>
+    <input type='submit' value='Delete Selected Locations'>
 {{pass}}
