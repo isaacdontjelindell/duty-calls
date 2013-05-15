@@ -116,6 +116,7 @@ def update(location):
             try:
                 user_row = getUserDataFromName(name.strip())
             except KeyError, e:
+                #TODO send SMS to location AHD's
                 logError(e.message, location)
             new_forwarding_users.append(user_row)
 
