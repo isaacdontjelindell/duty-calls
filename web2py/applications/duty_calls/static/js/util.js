@@ -8,8 +8,7 @@ function toggleAddUser(loc_name) {
             "sAjaxSource": '/duty_calls/json/users.json',
             "aoColumnDefs": [
                 { "bSearchable": false, "bVisible": false, "aTargets": [ 3 ] },
-                { "bSearchable": false, "bVisible": false, "aTargets": [ 4 ] },
-                { "bSearchable": false, "bVisible": false, "aTargets": [ 5 ] }
+                { "bSearchable": false, "bVisible": false, "aTargets": [ 4 ] }
             ]
         });
 
@@ -24,7 +23,7 @@ function addSelectedUsers() {
     form = $('#add_users')
     for(var i=0; i<selected_rows.length; i++) {
         var position = add_user_table.fnGetPosition(selected_rows[i]);
-        var uid = add_user_table.fnGetData(position)[5];
+        var uid = add_user_table.fnGetData(position)[4];
         form.append("<input type='checkbox' name='add_ids' value='" + uid + "' checked>");
     }
     return true;
@@ -37,8 +36,7 @@ function showRemoveUserTable(loc_name) {
         "sAjaxSource": '/duty_calls/json/users.json/'+loc_name,
         "aoColumnDefs": [
             { "bSearchable": false, "bVisible": false, "aTargets": [ 3 ] },
-            { "bSearchable": false, "bVisible": false, "aTargets": [ 4 ] },
-            { "bSearchable": false, "bVisible": false, "aTargets": [ 5 ] }
+            { "bSearchable": false, "bVisible": false, "aTargets": [ 4 ] }
         ]
     });
 
@@ -52,7 +50,7 @@ function removeSelectedUsers() {
     form = $('#remove_users');
     for(var i=0; i<selected_rows.length; i++) {
         var position = remove_user_table.fnGetPosition(selected_rows[i]);
-        var uid = remove_user_table.fnGetData(position)[5]; // get the uid of the user to be removed
+        var uid = remove_user_table.fnGetData(position)[4]; // get the uid of the user to be removed
         form.append("<input type='checkbox' name='remove_ids' value='" + uid + "' checked>");
     }
     return true;

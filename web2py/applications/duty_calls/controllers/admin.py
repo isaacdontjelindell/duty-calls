@@ -46,7 +46,7 @@ def locations():
 
         location_id = util.getLocationFromName(location_name).id
         for remove_user_id in remove_user_ids:
-            user = db(db.auth_user.id == remove_user_id).select()[0]
+            user = db(db.users.id == remove_user_id).select()[0]
 
             # get the list of locations the user is currently associated with
             user_locs = user.locations
@@ -63,7 +63,7 @@ def locations():
 
         location_id = util.getLocationFromName(location_name).id
         for add_user_id in add_user_ids:
-            user = db(db.auth_user.id == add_user_id).select()[0]
+            user = db(db.users.id == add_user_id).select()[0]
             # get the list of locatitons the user is currently associated with
             user_locs = user.locations
             
@@ -111,18 +111,16 @@ def locations():
 def users():
     args = request.args
 
-    grid = SQLFORM.smartgrid(db.auth_user, 
+    grid = SQLFORM.smartgrid(db.users, 
                              csv=False, 
-                             linked_tables= ['locations'],
-                             fields = [db.auth_user.first_name,
-                                       db.auth_user.last_name,
-                                       db.auth_user.nicknames,
-                                       db.auth_user.phone,
-                                       db.auth_user.email,
-                                       db.auth_user.location_names,
-                                       db.auth_user.sms_on,
+                             fields = [db.users.first_name,
+                                       db.users.last_name,
+                                       db.users.nicknames,
+                                       db.users.phone,
+                                       db.users.location_names,
+                                       db.users.sms_on,
                                       ],
-                             headers = { 'auth_user.location_names':'Locations'},
+                             headers = { 'users.location_names':'Locations'},
                              onvalidation=lambda form:processUserUpdateForm(form)
                             )
     

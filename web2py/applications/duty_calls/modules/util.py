@@ -152,7 +152,7 @@ def update(location):
 
 def getUserDataFromName(name):
     db = current.db
-    q = db.auth_user.nicknames.contains(name)
+    q = db.users.nicknames.contains(name)
     rows = db(q).select()
     
     if len(rows) == 0:
@@ -196,7 +196,7 @@ def like_query(term, field):
 def getUsersForLocation(location_row):
     db = current.db
 
-    q = db.auth_user.locations.contains(location_row.id)
+    q = db.users.locations.contains(location_row.id)
     users = db(q).select()
     return users
 
@@ -206,8 +206,8 @@ def logError(error, location=None, level="warn"):
         
         # find the AHD group ID. Could hardcode this, but makes it more
         # portable to search for it.
-        q = db.auth_group.role == "ahd"
-        ahd_group_id = db(q).select()[0].id
+        #q = db.auth_group.role == "ahd"
+        #ahd_group_id = db(q).select()[0].id
 
         # find all users who have ahd_group_id and are associated with location
         #q = ((db.auth_membership.group_id == ahd_group_id) & 
