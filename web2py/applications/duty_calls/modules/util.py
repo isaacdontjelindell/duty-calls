@@ -10,6 +10,20 @@ import json
 request = current.request
 twilio_client = TwilioRestClient()
 
+def validTwilioNumber(twilio_number_id):
+    try:
+        twilio_client.phone_numbers.get(twilio_number_id).friendly_name
+        return True
+    except:
+        return False
+
+def validCalUrl(cal_url):
+    try:
+        ics = urllib.urlopen(cal_url).read()
+        return True
+    except:
+        return False
+
 def getTwilioNumber(location):
     return twilio_client.phone_numbers.get(location['twilio_number_id']).friendly_name
 
