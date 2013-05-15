@@ -110,6 +110,7 @@ def locations():
 @auth.requires_membership("ahd")
 def users():
     args = request.args
+
     grid = SQLFORM.smartgrid(db.auth_user, 
                              csv=False, 
                              linked_tables= ['locations'],
@@ -119,7 +120,7 @@ def users():
                                        db.auth_user.phone,
                                        db.auth_user.email,
                                        db.auth_user.location_names,
-                                       db.auth_user.sms_on
+                                       db.auth_user.sms_on,
                                       ],
                              headers = { 'auth_user.location_names':'Locations'},
                              onvalidation=lambda form:processUserUpdateForm(form)
