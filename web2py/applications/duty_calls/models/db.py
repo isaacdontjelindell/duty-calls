@@ -77,8 +77,18 @@ crud, service, plugins = Crud(db), Service(), PluginManager()
 ## extra fields for duty calls
 auth.settings.extra_fields['auth_user'] = [Field('phone','string', required=True), 
                                            Field('locations','list:reference locations'),
+                                           Field('location_names', 'list:string', compute=lambda r: getLocationNames(r)),
                                            Field('sms_on','boolean'), 
                                            Field('nicknames','list:string',compute=lambda r: [r['first_name'] + " " + r['last_name']])]
+
+def getLocationNames(row):
+    names = []
+    for lid in row.locations:
+        q = db.locations.id == lid
+        loc_name = db(q).select()[0].location_name
+        names.append(loc_name)
+
+    return names
 
 
 ## create all tables needed by auth if not custom tables

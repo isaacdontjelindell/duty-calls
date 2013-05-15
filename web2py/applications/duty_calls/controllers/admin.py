@@ -2,7 +2,6 @@ import util
 
 @auth.requires_membership("admin")
 def locations():
-    
     def specific_location(location_name):
         ## if there is a location specified (e.g. ...locations/brandt) ##
         location_name = args[0]
@@ -111,20 +110,29 @@ def locations():
 @auth.requires_membership("ahd")
 def users():
     args = request.args
-        
-    ## if there is a location specified to show users from (e.g. users/brandt) ##
-    if len(args) > 0:
-        location_name = args[0]
-        location = util.getLocationFromName(location_name)
-        q = (db.auth_user.locations.contains(location.id))
     
-    ## no location specified; show all users ##
-    else:
-        location = None
-        q = db.auth_user.id > 0
+    q = db.auth_user.id > 0
+    grid = SQLFORM.smartgrid(db.auth_user, 
+                             csv=False, 
+                             deletable=False, 
+                             linked_tables= ['locations'],
+                             fields = [db.auth_user.first_name,
+                                       db.auth_user.last_name,
+                                       db.auth_user.phone,
+                                       db.auth_user.email,
+                                       db.auth_user.location_names,
+                                       db.auth_user.sms_on
+                                      ],
+                             headers = { 'auth_user.location_names':'Locations'}
+                            )
     
     users = db(q).select()
-    return dict(users=users, location=location)
+
+    q = db.locations.id > 0
+    locations = db(q).select()
+    return dict(grid=grid)
+
+
 
 def addLocationProcess(form):
     twilio_number_id = form.vars.twilio_number_id
