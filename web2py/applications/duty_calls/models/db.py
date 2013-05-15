@@ -79,7 +79,7 @@ auth.settings.extra_fields['auth_user'] = [Field('phone','string', required=True
                                            Field('locations','list:reference locations'),
                                            Field('location_names', 'list:string', compute=lambda r: getLocationNames(r)),
                                            Field('sms_on','boolean'), 
-                                           Field('nicknames','list:string',compute=lambda r: [r['first_name'] + " " + r['last_name']])]
+                                           Field('nicknames','list:string')]
 
 def getLocationNames(row):
     names = []

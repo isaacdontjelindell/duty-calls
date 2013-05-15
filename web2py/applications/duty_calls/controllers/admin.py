@@ -110,28 +110,34 @@ def locations():
 @auth.requires_membership("ahd")
 def users():
     args = request.args
-    
-    q = db.auth_user.id > 0
     grid = SQLFORM.smartgrid(db.auth_user, 
                              csv=False, 
-                             deletable=False, 
                              linked_tables= ['locations'],
                              fields = [db.auth_user.first_name,
                                        db.auth_user.last_name,
+                                       db.auth_user.nicknames,
                                        db.auth_user.phone,
                                        db.auth_user.email,
                                        db.auth_user.location_names,
                                        db.auth_user.sms_on
                                       ],
-                             headers = { 'auth_user.location_names':'Locations'}
+                             headers = { 'auth_user.location_names':'Locations'},
+                             onvalidation=lambda form:processUserUpdateForm(form)
                             )
     
-    users = db(q).select()
-
-    q = db.locations.id > 0
-    locations = db(q).select()
     return dict(grid=grid)
 
+
+def processUserUpdateForm(form):
+    ## force the nicknames list to always have at least "first_name + ' ' + last_name"
+    nicknames = form.vars.nicknames
+    default_nickname = form.vars.first_name + " " + form.vars.last_name
+    if not default_nickname in nicknames:
+        if isinstance(nicknames, list):
+            nicknames.append(default_nickname)
+        else:
+            nicknames = [nicknames, default_nickname]
+    form.vars.nicknames = nicknames
 
 
 def addLocationProcess(form):
