@@ -83,10 +83,11 @@ auth.settings.extra_fields['auth_user'] = [Field('phone','string'),
 
 def getLocationNames(row):
     names = []
-    for lid in row.locations:
-        q = db.locations.id == lid
-        loc_name = db(q).select()[0].location_name
-        names.append(loc_name)
+    if row.locations:
+        for lid in row.locations:
+            q = db.locations.id == lid
+            loc_name = db(q).select()[0].location_name
+            names.append(loc_name)
 
     return names
 
