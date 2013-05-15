@@ -195,10 +195,10 @@ def logError(error, location=None, level="warn"):
         ahd_group_id = db(q).select()[0].id
 
         # find all users who have ahd_group_id and are associated with location
-        q = ((db.auth_membership.group_id == ahd_group_id) & 
-            (db.auth_membership.user_id == db.auth_user.id) & 
-            (db.auth_user.locations.contains(location['id'])))
-        ahd_list = db(q).select()
+        #q = ((db.auth_membership.group_id == ahd_group_id) & 
+        #    (db.auth_membership.user_id == db.auth_user.id) & 
+        #    (db.auth_user.locations.contains(location['id'])))
+        #ahd_list = db(q).select()
             
         #print ahd_list[0]['auth_user']['first_name']
         # TODO SMS/email AHD's and maybe admin's too
