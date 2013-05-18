@@ -33,10 +33,11 @@ db.define_table('users',
 )
 
 
-eventLogin = db(db.auth_event.user_id == auth.user.id).select()
-if len(eventLogin) == 1:
-    session.flash= "This is the first time you've logged in. Please fill in your profile."
-    redirect(URL('default','user/profile'))
+if auth.user:
+    eventLogin = db(db.auth_event.user_id == auth.user.id).select()
+    if len(eventLogin) == 1:
+        session.flash= "This is the first time you've logged in. Please fill in your profile."
+        redirect(URL('default','user/profile'))
 
 def getLocationNames(row):
     names = []
