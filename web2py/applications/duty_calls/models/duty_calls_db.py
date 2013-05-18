@@ -32,6 +32,12 @@ db.define_table('users',
     Field('nicknames','list:string')
 )
 
+
+eventLogin = db(db.auth_event.user_id == auth.user.id).select()
+    if len(eventLogin) == 1:
+        session.flash= "This is the first time you've logged in. Please fill in your profile."
+        redirect(URL('default','user/profile'))
+
 def getLocationNames(row):
     names = []
     if row.locations:
@@ -39,6 +45,5 @@ def getLocationNames(row):
             q = db.locations.id == lid
             loc_name = db(q).select()[0].location_name
             names.append(loc_name)
-
     return names
 

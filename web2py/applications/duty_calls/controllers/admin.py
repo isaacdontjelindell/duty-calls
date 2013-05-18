@@ -127,35 +127,23 @@ def users():
     return dict(grid=grid)
 
 
-def processUserUpdateForm(form):
-    ## force the nicknames list to always have at least "first_name + ' ' + last_name"
-    nicknames = form.vars.nicknames
-    default_nickname = form.vars.first_name + " " + form.vars.last_name
-    if not default_nickname in nicknames:
-        if isinstance(nicknames, list):
-            nicknames.append(default_nickname)
-        else:
-            nicknames = [nicknames, default_nickname]
-    form.vars.nicknames = nicknames
-
-
-def addLocationProcess(form):
-    twilio_number_id = form.vars.twilio_number_id
-    cal_Url = form.vars.calendar_url
-
-    if(not util.validTwilioNumber(twilio_number_id)):
-        form.errors.twilio_number_id = "Invalid  Twilio Number ID"
-    elif(not util.validCalUrl(cal_Url)):
-        form.errors.calendar_url = "Invalid Calendar URL"
-    
 @auth.requires_membership("admin")
 def addLocation():
     form = SQLFORM(db.locations, 
-        fields = ['location_name', 'calendar_url','twilio_number_id','is_res_life','fail_name','fail_number'],
-        labels = {'location_name':'Location Name','calendar_url':'Google Calender URL (iCal)','fail_name':"Default Forward Location",'fail_number':'Default Forward Number'},
-        col3 = {'is_res_life':'Interprets all day events as 7pm to 8am Duty Events','twilio_number_id':'Obtained from Twilio number URL'},
-        submit_button = 'Add Location')
-    if form.process(onvalidation=addLocationProcess).accepted:
+            fields = ['location_name',
+                      'calendar_url',
+                      'twilio_number_id',
+                      'is_res_life',
+                      'fail_name',
+                      'fail_number'],
+            labels = {'location_name':'Location Name',
+                      'calendar_url':'Google Calender URL (iCal)',
+                      'fail_name':"Default Forward Location",
+                      'fail_number':'Default Forward Number'},
+            col3 = {'is_res_life':'Interprets all day events as 7pm to 8am Duty Events',
+                    'twilio_number_id':'Obtained from Twilio number URL'},
+            submit_button = 'Add Location')
+    if form.process(onvalidation=processAddLocationForm).accepted:
         response.flash = "Location Added"
         redirect(URL('locations'))
     elif form.errors:
@@ -172,3 +160,26 @@ def removeLocation():
     for location_id in location_ids:
         del db.locations[location_id]
         redirect(URL('/duty_calls/admin/locations'))
+
+
+def processUserUpdateForm(form):
+    ## force the nicknames list to always have at least "first_name + ' ' + last_name"
+    nicknames = form.vars.nicknames
+    default_nickname = form.vars.first_name + " " + form.vars.last_name
+    if not default_nickname in nicknames:
+        if isinstance(nicknames, list):
+            nicknames.append(default_nickname)
+        else:
+            nicknames = [nicknames, default_nickname]
+    form.vars.nicknames = nicknames
+
+
+def processAddLocationForm(form):
+    twilio_number_id = form.vars.twilio_number_id
+    cal_Url = form.vars.calendar_url
+
+    if(not util.validTwilioNumber(twilio_number_id)):
+        form.errors.twilio_number_id = "Invalid  Twilio Number ID"
+    elif(not util.validCalUrl(cal_Url)):
+        form.errors.calendar_url = "Invalid Calendar URL"
+    
