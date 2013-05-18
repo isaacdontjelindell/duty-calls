@@ -28,7 +28,7 @@ handlers:
 - url: /(?P<a>.+?)/static/(?P<b>.+)
   static_files: applications/\1/static/\2
   upload: applications/(.+?)/static/(.+)
-  secure: optional
+  secure: always
 
 - url: /favicon.ico
   static_files: applications/welcome/static/favicon.ico
@@ -41,7 +41,7 @@ handlers:
 - url: .*
   #script: gaehandler.py         # CGI
   script: gaehandler.wsgiapp    # WSGI (Python 2.7 only)
-  secure: optional
+  secure: always
 
 admin_console:
   pages:
