@@ -1,5 +1,5 @@
 def update():
-    form = SQLFORM(db.locations,
+    form = SQLFORM(db.users,
                    fields = ['first_name',
                              'last_name',
                              'phone',
@@ -16,6 +16,11 @@ def update():
 
     return dict(form=form)
 
+def index():
+    q = db.users.uid_ref == auth.user.id
+    user = db(q).select()
+
+    return dict(user=user)
 
 def processUserProfileUpdateForm(form):
     
