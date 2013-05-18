@@ -4,9 +4,9 @@
 # are used when the respective element is missing from the
 # (possibly rewritten) incoming URL
 #
-default_application = 'init'    # ordinarily set in base routes.py
-default_controller = 'default'  # ordinarily set in app-specific routes.py
-default_function = 'index'      # ordinarily set in app-specific routes.py
+default_application = 'duty_calls'    # ordinarily set in base routes.py
+default_controller = 'admin'  # ordinarily set in app-specific routes.py
+default_function = 'locations'      # ordinarily set in app-specific routes.py
 
 # routes_app is a tuple of tuples.  The first item in each is a regexp that will
 # be used to match the incoming request URL. The second item in the tuple is
