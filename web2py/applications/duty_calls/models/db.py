@@ -27,14 +27,22 @@ else:
     ## session.connect(request, response, db = MEMDB(Client()))
 
 
+## This table will hold the Twilio API access stuff.
+## Needs to be manually populated with the auth token
+## and account SID.
 db.define_table('auth_tokens',
     Field('name','string'),
     Field('token_value','string')
 )
 
-#db.auth_tokens.insert(name="TWILIO_ACCOUNT_SID", token_value='ACfce841f283eaeb11ef7f0d73306b6e31')
-#db.auth_tokens.insert(name="TWILIO_AUTH_TOKEN", token_value='b60ffb527c452c5bbbb434bd8cfee111')
+q = db.auth_tokens.name == 'TWILIO_ACCOUNT_SID'
+sid = db(q).select()
+if len(sid) == 0:
+    db.auth_tokens.insert(name='TWILIO_ACCOUNT_SID', token_value='XXXXXXXXXXXXXXXXXXXXX')
+    db.auth_tokens.insert(name='TWILIO_AUTH_TOKEN', token_value='XXXXXXXXXXXXXXXXXXXXX')
 
+
+## if on GAE, get the auth tokens from the DB. Otherwise get them from private/conf.json
 if not request.env.web2py_runtime_gae:
     conf_path = os.path.join(request.folder,'private','conf.json')
     with open(conf_path,'r') as f:
@@ -44,12 +52,10 @@ if not request.env.web2py_runtime_gae:
 
 else:
     q = db.auth_tokens.name == 'TWILIO_AUTH_TOKEN'
-    q = db.auth_tokens.id == 35005
     row = db(q).select()[0]
     at = row['token_value']
 
     q = db.auth_tokens.name == 'TWILIO_ACCOUNT_SID'
-    q = db.auth_tokens.id == 30002
     row = db(q).select()[0]
     acs = row['token_value']
 
