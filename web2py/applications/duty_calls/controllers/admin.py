@@ -15,7 +15,9 @@ def locations():
                                    'fail_number',
                                    'is_res_life',
                                    'calendar_url',
-                                   'twilio_number_id']
+                                   'twilio_number_id'],
+                         headers = {"current_on_duty":"Currently On Duty",
+                                    "calendar_url":"Duty Calendar URL"}
                         )
 
         return form
@@ -109,20 +111,17 @@ def add_location():
 
 @auth.requires_membership("ahd","admin")
 def users():
-    grid = SQLFORM.smartgrid(db.users, 
-                             csv=False, 
-                             fields = [db.users.first_name,
-                                       db.users.last_name,
-                                       db.users.nicknames,
-                                       db.users.phone,
-                                       db.users.location_names,
-                                       db.users.sms_on,
-                                      ],
-                             headers = { 'users.location_names':'Locations'},
-                             onvalidation=lambda form:processUserUpdateForm(form)
-                            )
+    response.title = "All Users"
+    form = crud.select(db.users, "id>0",
+                       fields = ['first_name',
+                                 'last_name',
+                                 'phone',
+                                 'location_names',
+                                 'nicknames',
+                                 'sms_on']
+                      )
     
-    return dict(grid=grid)
+    return dict(ret=form)
 
 
 ###############################################################################

@@ -1,7 +1,7 @@
 {{extend 'layout.html'}}
 
 {{ if action == 'show_location': }}
-    <a href="{{ =URL('locations', args=(location_name,'update'))}}">Edit this location</a>
+    <a href="{{ =URL('locations', args=(location_name,'update'))}}">Edit or delete this location</a>
     {{=ret}}
 {{ pass }}
 
