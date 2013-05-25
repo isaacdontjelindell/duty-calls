@@ -4,10 +4,19 @@ import util
 def locations():
     ## Show information about location_name ##
     def show_location(location_name):
-        response.title = location_name
         location = util.getLocationFromName(location_name)
-
-        form = crud.read(db.locations, location.id)
+        response.title = location_name
+        response.subtitle = location.twilio_number
+    
+        form = crud.update(db.locations, location.id, readonly=True, deletable=False,
+                         fields = ['current_on_duty',
+                                   'current_forwarding_destinations',
+                                   'fail_name',
+                                   'fail_number',
+                                   'is_res_life',
+                                   'calendar_url',
+                                   'twilio_number_id']
+                        )
 
         return form
         
