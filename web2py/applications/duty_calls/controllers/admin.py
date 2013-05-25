@@ -2,87 +2,58 @@ import util
 
 @auth.requires_membership("admin")
 def locations():
-    def specific_location(location_name):
-        ## if there is a location specified (e.g. ...locations/brandt) ##
-        location_name = args[0]
+    ## Show information about location_name ##
+    def show_location(location_name):
+        response.title = location_name
         location = util.getLocationFromName(location_name)
-        locations = [location] # return a list so we can use the same view
-        users = util.getUsersForLocation(location)
-        return (locations, users)
-    
-    def all_locations():
-        ## no location specified; show all locations ##
-        q = db.locations.id > 0
-        locations = db(q).select()
-        return locations
-    
-    def update_info(location_name):
-        post_vars = request.post_vars
-        fail_name = post_vars['fail_name']
-        fail_num = post_vars['fail_num']
-        forwarding_id = post_vars['forwarding_id']
-        calendar_url = post_vars['calendar_url']
 
-        if 'is_res_life' in post_vars:
-            is_res_life = True
-        else:
-            is_res_life = False
+        form = crud.read(db.locations, location.id)
 
+        return form
+        
+    ## Update information for location_name ##
+    def update_location(location_name):
+        response.title = location_name
         location = util.getLocationFromName(location_name)
         
-        location.fail_name = fail_name
-        location.fail_number = fail_num
-        location.is_res_life = is_res_life
-        location.twilio_number_id = forwarding_id
-        location.calendar_url = calendar_url
-        location.update_record() # persist the changes in the DB
+        form = crud.update(db.locations, location.id,
+                           fields = ['twilio_number_id',
+                                     'calendar_url',
+                                     'is_res_life',
+                                     'fail_name',
+                                     'fail_number'],
+                           ondelete = redirect_to_locations,
+                           next = URL('locations',args=(location.location_name))
+                          )
 
-    def removeUser(location_name):
-        ## remove the user ids from the POST from location_name ##
-        post_vars = request.post_vars
-        remove_user_ids = post_vars['remove_ids']
-        if not remove_user_ids:
-            return
+        return form
 
-        location_id = util.getLocationFromName(location_name).id
-        for remove_user_id in remove_user_ids:
-            user = db(db.users.id == remove_user_id).select()[0]
+    ## Show a list of all locations in the database ##
+    def show_all_locations():
+        response.title = "Locations"
+        locs = db(db.locations.id > 0).select()
+        return locs
 
-            # get the list of locations the user is currently associated with
-            user_locs = user.locations
-            
-            # remove this location from the user's locations list
-            user_locs = user_locs.remove(long(location_id)) 
-            user.update_record(locations=user_locs)
-    
-    def addUser(location_name):
-        post_vars = request.post_vars
-        add_user_ids = post_vars['add_ids'] # user ID's to remove from location
-        if not add_user_ids:
-            return
-
-        location_id = util.getLocationFromName(location_name).id
-        for add_user_id in add_user_ids:
-            user = db(db.users.id == add_user_id).select()[0]
-            # get the list of locatitons the user is currently associated with
-            user_locs = user.locations
-            
-            # don't put duplicate location references in the DB
-            if not long(location_id) in user_locs:
-                # add this location to the user's locations list
-                user_locs.append(long(location_id))
-                user.update_record(locations=user_locs)
+    ## redirect to /duty_calls/admin/locations ##
+    def redirect_to_locations(id):
+        redirect(URL('locations'))
 
 
-    locations = []
-    users = []
-
+### DISPATCH ###
     args = request.args
+    action = ''
+    location_name = ''
+
     if len(args) == 0:
-        locations = all_locations()
+        # show all locations
+        action = 'show_all_locations'
+        ret = show_all_locations()
 
     elif len(args) == 1:
-        locations, users = specific_location(args[0])
+        # show location arg[0]
+        action = 'show_location'
+        location_name = args[0]
+        ret = show_location(location_name)
 
     elif len(args) > 1:
         location_name = args[0]
@@ -96,21 +67,39 @@ def locations():
         elif action == "remove":
             removeUser(location_name)
         
+        # /%location_name%/update
         elif action == "update":
-            update_info(location_name)  # TODO need to implement this!
+            action = 'update_location'
+            ret = update_location(location_name)  
 
         # redirect back to the location interface after changing stuff
         # This is equivalent to "raise HTTP(301, 'Redirect')"
-        redirect(URL('locations', args=(location_name)))
+        #redirect(URL('locations', args=(location_name)))
         
 
-    return dict(locations=locations, users=users)
+    return dict(ret=ret, action=action, location_name=location_name)
 
+
+###############################################################################
+
+@auth.requires_membership("ahd","admin")
+def add_location():
+    response.title = "Add Location"
+    form = crud.create(db.locations,
+                       next = URL('locations'),
+                       fields = ['location_name',
+                                 'calendar_url',
+                                 'twilio_number_id',
+                                 'is_res_life',
+                                 'fail_name',
+                                 'fail_number']
+                      ) 
+    return dict(ret=form)
+
+###############################################################################
 
 @auth.requires_membership("ahd","admin")
 def users():
-    args = request.args
-
     grid = SQLFORM.smartgrid(db.users, 
                              csv=False, 
                              fields = [db.users.first_name,
@@ -127,28 +116,7 @@ def users():
     return dict(grid=grid)
 
 
-@auth.requires_membership("admin")
-def addLocation():
-    form = SQLFORM(db.locations, 
-            fields = ['location_name',
-                      'calendar_url',
-                      'twilio_number_id',
-                      'is_res_life',
-                      'fail_name',
-                      'fail_number'],
-            labels = {'location_name':'Location Name',
-                      'calendar_url':'Google Calender URL (iCal)',
-                      'fail_name':"Default Forward Location",
-                      'fail_number':'Default Forward Number'},
-            col3 = {'is_res_life':'Interprets all day events as 7pm to 8am Duty Events',
-                    'twilio_number_id':'Obtained from Twilio number URL'},
-            submit_button = 'Add Location')
-    if form.process(onvalidation=processAddLocationForm).accepted:
-        response.flash = "Location Added"
-        redirect(URL('locations'))
-    elif form.errors:
-        response.flash = "Errors!"
-    return dict(form=form)
+###############################################################################
 
 def removeLocation():
     ## remove the location
@@ -161,6 +129,7 @@ def removeLocation():
         del db.locations[location_id]
         redirect(URL('/duty_calls/admin/locations'))
 
+###############################################################################
 
 def processUserUpdateForm(form):
     ## force the nicknames list to always have at least "first_name + ' ' + last_name"
@@ -173,6 +142,7 @@ def processUserUpdateForm(form):
             nicknames = [nicknames, default_nickname]
     form.vars.nicknames = nicknames
 
+###############################################################################
 
 def processAddLocationForm(form):
     twilio_number_id = form.vars.twilio_number_id

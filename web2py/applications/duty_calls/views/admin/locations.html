@@ -1,100 +1,40 @@
 {{extend 'layout.html'}}
 
-<!-- Show specific location -->
-{{ if len(locations) == 1:
-    location=locations[0]
-}}
-    <h1>{{=locations[0].location_name}} <small> {{=location.twilio_number}}</small></h1><br>
+{{ if action == 'show_location': }}
+    <a href="{{ =URL('locations', args=(location_name,'update'))}}">Edit this location</a>
+    {{=ret}}
+{{ pass }}
 
-    <b>Currently On Duty:</b><br>
-    {{ for i in range(len(location.current_on_duty)): }}
-        {{ =location.current_on_duty[i]}} ({{ =location.current_forwarding_destinations[i] }})<br>
-    {{ pass}}<br><br>
-    
-    <b>Location Information: </b><span onclick="editInfo('{{=location.location_name}}')"><u>(+Edit)</u></span><br>
-    <div id='location_info'>
-        Fail Name: <span id='fail_name'>{{=location.fail_name}}</span><br>
-        Fail Number: <span id='fail_num'>{{=location.fail_number}}</span><br>
-        Is Res Life: <span id='is_rl'>{{=location.is_res_life}}</span><br>
-        Twilio Forwarding ID: <span id='forwarding_id'>{{=location.twilio_number_id}}</span><br>
-        Duty Calendar URL: <span id='calendar_url'>{{=location.calendar_url}}</span><br><br><br>
-    </div>
+{{ if action == 'update_location': }}
+    {{=ret}}
+{{ pass }}
 
-    <b>User List:</b><br><br>
-    <table id='remove-user-list'>
-        <thead><tr>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>SMS Notifications</th>
-        </tr></thead>
-        <tbody>
-        </tbody>
-    </table><br><br>
-    <form name='remove_users'id='remove_users' onsubmit='removeSelectedUsers();' method=POST action='{{=location.location_name}}/remove'>
-        <input type='submit' value='Remove selected users'>
-    </form>
-    <hr>
-
-    <form name='dummy-form'>
-        <a href='#' onclick="toggleAddUser('{{=location.location_name}}')">+Add Users to this Location</a>
-    </form>
-    <div id='add-user-div' style='display:none;'>
-        <table id='add-user-list'>
-            <thead><tr>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>SMS Notifications</th>
-            </tr></thead>
-            <tbody>
-            </tbody>
-        </table><br><br>
-        <form name='add_users' id='add_users' onsubmit='addSelectedUsers();' method=POST action='{{=location.location_name}}/add'>
-            <input type='submit' value='Add Selected Users'>
-        </form>
-    </div>
-        
-    <script type='text/javascript'>
-        // ajax call to load the user table
-        showRemoveUserTable('{{=location.location_name}}');
-    </script>
-        
-<!-- Show all locations -->
-{{ else: }}
-    <h1>Locations</h1><a href="/duty_calls/admin/addLocation">(+Add New Location)</a><br>
-    <a href = "/duty_calls/admin/users">(Manage Users)</a>
-    <form name='remove_location' id='remove_location' method=POST action='/duty_calls/admin/removeLocation'>
+{{ if action == 'show_all_locations': }}
     <table>
         <tr>
-            <td></td>
-            <td>Name</td>
-            <td>Forwarding Number</td>
-            <td>Currently On Duty</td>
-            <td>Forwarding Destinations</td>
-            <td>Fail Name</td>
-            <td>Fail Number</td>
-            <td>Is Res Life?</td>
+            <th>Location</th>
+            <th>Forwarding Number</th>
+            <th>Currently On Duty</th>
+            <th>Is Res Life</th>
+            <th>Fail Name</th>
+            <th>Fail Number</th>
         </tr>
-        {{for loc in locations:}}
+        
+        {{ for loc in ret: }}
             <tr>
-                <td><input type='checkbox' name='remove_ids' value={{=loc.id}}></td>
-                <td><a href='/duty_calls/admin/locations/{{=loc.location_name}}'>{{=loc.location_name}}</a></td>
-    
-    <td>{{=loc.twilio_number}}</td>
+                <td>
+                    <a href="{{=URL('locations', args=(loc.location_name))}}">{{=loc.location_name}}</a>
+                </td>
+                <td>{{=loc.twilio_number}}</td>
                 <td>
                     {{ for name in loc.current_on_duty: }}
-                        {{ =name }}, 
+                        {{=name + ", "}}
                     {{ pass }}
                 </td>
-                <td>
-                    {{ for num in loc.current_forwarding_destinations: }}
-                        {{ =num }},
-                    {{ pass }}
-                </td>
+                <td>{{=loc.is_res_life}}</td>
                 <td>{{=loc.fail_name}}</td>
                 <td>{{=loc.fail_number}}</td>
-                <td>{{=loc.is_res_life}}</td>
             </tr>
-        {{pass}}
+        {{ pass }}
     </table>
-    <input type='submit' value='Delete Selected Locations'>
-{{pass}}
+{{ pass }}
