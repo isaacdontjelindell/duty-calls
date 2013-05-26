@@ -70,16 +70,8 @@ def locations():
         location_name = args[0]
         action = args[1]
 
-        # /%location_name%/add
-        if action == "add":
-            addUser(location_name)
-
-        # /%location_name%/remove
-        elif action == "remove":
-            removeUser(location_name)
-        
         # /%location_name%/update
-        elif action == "update":
+        if action == "update":
             action = 'update_location'
             ret = update_location(location_name)  
 
@@ -108,7 +100,6 @@ def add_location():
     return dict(ret=form)
 
 ###############################################################################
-
 @auth.requires_membership("ahd","admin")
 def users():
     response.title = "All Users"
@@ -123,7 +114,7 @@ def users():
                                   db.users.location_names,
                                   db.users.sms_on],
                          headers = { 'users.location_names':'Locations'},
-                         onvalidation=lambda form:processUserUpdateForm(form),
+                         onvalidation=process_user_update_form,
                          formargs = {'fields':['first_name',
                                                'last_name',
                                                'phone',
@@ -137,25 +128,14 @@ def users():
     return dict(grid=grid)
 
 
-###############################################################################
-
-def removeLocation():
-    ## remove the location
-    post_vars = request.post_vars
-    location_ids = post_vars['remove_ids']
-    if not location_ids:
-        return
-
-    for location_id in location_ids:
-        del db.locations[location_id]
-        redirect(URL('/duty_calls/admin/locations'))
 
 ###############################################################################
 
-def processUserUpdateForm(form):
+def process_user_update_form(form):
     ## force the nicknames list to always have at least "first_name + ' ' + last_name"
     nicknames = form.vars.nicknames
     default_nickname = form.vars.first_name + " " + form.vars.last_name
+
     if not default_nickname in nicknames:
         if isinstance(nicknames, list):
             nicknames.append(default_nickname)
