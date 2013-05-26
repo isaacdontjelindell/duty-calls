@@ -9,6 +9,7 @@ def update():
         form = crud.update(db.users, user,
                            deletable=False,
                            onvalidation=process_create_user_profile_form,
+                           next=URL('profile','check_user'),
                            fields = ['first_name',
                                      'last_name',
                                      'phone',
@@ -18,27 +19,39 @@ def update():
     else:
         form = crud.create(db.users,
                            onvalidation=process_create_user_profile_form,
+                           next=URL('profile','check_user'),
                            fields = ['first_name',
                                      'last_name',
                                      'phone',
                                      'sms_on',
                                      'nicknames']
                           )
-
+        db.auth_event.insert(time_stamp=request.now,
+                             client_ip='0.0.0.0',
+                             user_id=auth.user.id,
+                             origin='auth',
+                             description='Users table entry created')
+        
     return dict(ret=form)
 
 
 def check_user():
     eventLogin = db(db.auth_event.user_id == auth.user.id).select()
+    
+    admin_group_id = db(db.auth_group.role == 'admin').select()[0].id
+    #ra_group_id = db(db.auth_group.role == 'ra').select()[0].id
 
     if len(eventLogin) == 1:
         session.flash= 'This is the first time you have logged into DutyCalls, please fill in your profile.'
         redirect(URL('profile','update'))
-    else:
-        session.flash = "Welcome back!"
+    if admin_group_id in auth.user_groups:
         redirect(URL('admin','locations'))
+    else:
+        redirect(URL('overview','index'))
 
     return dict()
+
+
 
 def process_create_user_profile_form(form):
     # make sure the nicknames list at least contains the nickname
