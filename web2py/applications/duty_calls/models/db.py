@@ -131,6 +131,13 @@ else:
 
 current.db = db
 
+
+def redirect_login(form):
+    redirect(URL('profile','check_user'))
+        
+auth.settings.login_onaccept = redirect_login
+auth.settings.register_onaccept = redirect_login
+
 #########################################################################
 ## Define your tables below (or better in another model file) for example
 ##

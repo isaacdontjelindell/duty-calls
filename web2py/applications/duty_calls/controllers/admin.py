@@ -50,7 +50,7 @@ def locations():
         redirect(URL('locations'))
 
 
-### DISPATCH ###
+### LOCATIONS DISPATCH ###
     args = request.args
     action = ''
     location_name = ''
@@ -93,7 +93,7 @@ def locations():
 
 ###############################################################################
 
-@auth.requires_membership("ahd","admin")
+@auth.requires_membership("admin")
 def add_location():
     response.title = "Add Location"
     form = crud.create(db.locations,
@@ -113,7 +113,9 @@ def add_location():
 def users():
     response.title = "All Users"
     grid = SQLFORM.grid(db.users, 
-                        csv=False, 
+                        csv=False,
+                        create=False,
+                        deletable=False,
                         fields = [db.users.first_name,
                                   db.users.last_name,
                                   db.users.nicknames,
