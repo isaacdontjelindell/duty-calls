@@ -24,7 +24,7 @@ response.google_analytics_id = None
 #########################################################################
 
 response.menu = [
-    (T('Locations'), False, URL('admin', 'locations'), []),
+    (T('Locations'), False, URL('overview', 'index'), []),
     (T('Add Location'), False, URL('admin', 'add_location'), [])
 ]
 

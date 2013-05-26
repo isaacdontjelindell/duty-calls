@@ -44,7 +44,9 @@ def check_user():
     if len(eventLogin) == 1:
         session.flash= 'This is the first time you have logged into DutyCalls, please fill in your profile.'
         redirect(URL('profile','update'))
-    if admin_group_id in auth.user_groups:
+saac@YODA-UB ~/github/duty-calls
+$ git push                                               [05/26/13  1:35PM]
+if admin_group_id in auth.user_groups:
         redirect(URL('admin','locations'))
     else:
         redirect(URL('overview','index'))
