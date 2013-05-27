@@ -28,13 +28,13 @@ else:
 
 
 ## This table will hold the Twilio API access stuff.
-## Needs to be manually populated with the auth token
-## and account SID.
+## Needs to be manually populated with the auth token and account SID.
 db.define_table('auth_tokens',
     Field('name','string'),
     Field('token_value','string')
 )
 
+## populate the auth_tokens table with dummy values so that GAE creates it ##
 q = db.auth_tokens.name == 'TWILIO_ACCOUNT_SID'
 sid = db(q).select()
 if len(sid) == 0:
@@ -49,14 +49,11 @@ if not request.env.web2py_runtime_gae:
         conf = json.load(f)
         os.environ['TWILIO_AUTH_TOKEN'] = conf['TWILIO_AUTH_TOKEN']
         os.environ['TWILIO_ACCOUNT_SID'] = conf['TWILIO_ACCOUNT_SID']
-
 else:
-    q = db.auth_tokens.name == 'TWILIO_AUTH_TOKEN'
-    row = db(q).select()[0]
+    row = db(db.auth_tokens.name == 'TWILIO_AUTH_TOKEN').select()[0]
     at = row['token_value']
 
-    q = db.auth_tokens.name == 'TWILIO_ACCOUNT_SID'
-    row = db(q).select()[0]
+    row = db(db.auth_tokens.name == 'TWILIO_ACCOUNT_SID').select()[0]
     acs = row['token_value']
 
     os.environ['TWILIO_AUTH_TOKEN'] = at
@@ -84,23 +81,6 @@ response.generic_patterns = ['*']
 from gluon.tools import Auth, Crud, Service, PluginManager, prettydate
 auth = Auth(db)
 crud, service, plugins = Crud(db), Service(), PluginManager()
-
-## extra fields for duty calls
-#auth.settings.extra_fields['auth_user'] = [Field('phone','string'), 
-#                                           Field('locations','list:reference locations'),
-#                                           Field('location_names', 'list:string', compute=lambda r: getLocationNames(r)),
-#                                           Field('sms_on','boolean', default=False), 
-#                                           Field('nicknames','list:string')]
-
-#def getLocationNames(row):
-#    names = []
-#    if row.locations:
-#        for lid in row.locations:
-#            q = db.locations.id == lid
-#            loc_name = db(q).select()[0].location_name
-#            names.append(loc_name)
-
-#    return names
 
 
 ## create all tables needed by auth if not custom tables
@@ -133,14 +113,37 @@ else:
     use_janrain(auth, filename='private/janrain.key')
 
 
+## so that the db object can be accessed from modules 
 current.db = db
 
-
+## redirect to a controller that checks if this is the first time login
 def redirect_login(form):
     redirect(URL('profile','check_user'))
         
 auth.settings.login_onaccept = redirect_login
 auth.settings.register_onaccept = redirect_login
+
+
+## create the admin and ra groups if they don't already exist
+ra = db(db.auth_group.role == 'ra').select()
+if len(ra) < 1:
+    db.auth_group.insert(role='ra', description='resident assistant')
+
+admin = db(db.auth_group.role == 'admin').select()
+if len(admin) < 1:
+    db.auth_group.insert(role='admin', description='administrator')
+
+
+## create an initial admin user if there isn't already one
+if not db().select(db.auth_user.ALL).first():
+    user_id = db.auth_user.insert(first_name = 'System',
+                                  last_name = 'Administrator',
+                                  email = 'root@null.com',
+                                  password = db.auth_user.password.validate('password')[0]
+                                 )
+    admin_id = db(db.auth_group.role == 'admin').select()[0].id
+    db.auth_membership.insert(user_id=user_id, group_id=admin_id)
+
 
 #########################################################################
 ## Define your tables below (or better in another model file) for example
