@@ -34,7 +34,7 @@ def update():
         
     return dict(ret=form)
 
-
+@auth.requires_login()
 def check_user():
     eventLogin = db(db.auth_event.user_id == auth.user.id).select()
     
