@@ -28,6 +28,21 @@ response.menu = [
     (T('Add Location'), False, URL('admin', 'add_location'), [])
 ]
 
+def getNavbar():
+    def Anr(*a,**b):
+        b['_rel']='nofollow'
+        return A(*a,**b)
+
+    navbar = auth.navbar(mode='dropdown')
+    if auth.user:
+        profile = LI(Anr(I(_class='icon-user'), ' ' + T('Profile'), _href='/duty_calls/profile/update'))
+        #navbar.element('ul.dropdown-menu').components.extend([profile])
+        navbar.element('ul.dropdown-menu').components.insert(0, profile)
+    
+    return navbar
+
+auth.getNavbar = getNavbar
+
 DEVELOPMENT_MENU = False
 
 #########################################################################

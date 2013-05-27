@@ -80,7 +80,7 @@
           <span class="icon-bar"></span>
         </button>
 	{{=response.logo or ''}}
-        <ul id="navbar" class="nav pull-right">{{='auth' in globals() and auth.navbar(mode="dropdown") or ''}}</ul>
+        <ul id="navbar" class="nav pull-right">{{='auth' in globals() and auth.getNavbar() or ''}}</ul>
         <div class="nav-collapse">
           {{is_mobile=request.user_agent().is_mobile}}
           {{if response.menu:}}
