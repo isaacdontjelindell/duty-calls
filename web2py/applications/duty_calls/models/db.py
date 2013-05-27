@@ -142,7 +142,9 @@ if not db().select(db.auth_user.ALL).first():
                                   password = db.auth_user.password.validate('password')[0]
                                  )
     admin_id = db(db.auth_group.role == 'admin').select()[0].id
+    ra_id = db(db.auth_group.role == 'ra').select()[0].id
     db.auth_membership.insert(user_id=user_id, group_id=admin_id)
+    db.auth_membership.insert(user_id=user_id, group_id=ra_id)
 
 
 #########################################################################
