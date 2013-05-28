@@ -2,7 +2,7 @@ def update():
     response.title = "Update your profile"
 
     auth_user_id = auth.user.id
-    q = db.users.id == auth_user_id
+    q = db.users.uid_ref == auth_user_id
     user = db(q).select()
     if len(user) > 0:
         user = user[0]
