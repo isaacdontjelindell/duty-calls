@@ -139,8 +139,7 @@ def update(location):
                 to_number = "+1" + user['phone'].replace("-", "") # must be in format +12316851234
                 message = twilio_client.sms.messages.create(to=to_number, 
                                                             from_=getTwilioNumber(location),
-                                                            body="You are now on duty.")
-
+                                                            body=location['sms_string'])        
     voice_URL += "Message=Forwarded%20Call&" + "FailUrl=http://twimlets.com/forward?PhoneNumber=" + location['fail_number']
     twilio_client.phone_numbers.get(location['twilio_number_id']).update(voice_url=voice_URL)
 

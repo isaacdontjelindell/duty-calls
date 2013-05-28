@@ -54,6 +54,14 @@ def locations():
             # remove this location from the user's locations list
             user_locs = user_locs.remove(long(location_id)) 
             user.update_record(locations=user_locs)
+
+    def saveSMSMessage(location_name):
+        post_vars = request.post_vars
+        smsString = post_vars['sms_string']
+        print('the sms string is: ', smsString)
+        location = db(db.locations.location_name == location_name).select()[0]
+        location.update_record(sms_string= smsString)
+        redirect(URL('locations/' + location_name))
     
     def addUser(location_name):
         post_vars = request.post_vars
@@ -95,6 +103,9 @@ def locations():
         # /%location_name%/remove
         elif action == "remove":
             removeUser(location_name)
+
+        elif action == "sms":
+            saveSMSMessage(location_name)
         
         elif action == "update":
             update_info(location_name)  # TODO need to implement this!
@@ -173,7 +184,6 @@ def processUserUpdateForm(form):
             nicknames = [nicknames, default_nickname]
     form.vars.nicknames = nicknames
 
-
 def processAddLocationForm(form):
     twilio_number_id = form.vars.twilio_number_id
     cal_Url = form.vars.calendar_url
@@ -182,4 +192,3 @@ def processAddLocationForm(form):
         form.errors.twilio_number_id = "Invalid  Twilio Number ID"
     elif(not util.validCalUrl(cal_Url)):
         form.errors.calendar_url = "Invalid Calendar URL"
-    

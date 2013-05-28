@@ -17,7 +17,8 @@
         Fail Number: <span id='fail_num'>{{=location.fail_number}}</span><br>
         Is Res Life: <span id='is_rl'>{{=location.is_res_life}}</span><br>
         Twilio Forwarding ID: <span id='forwarding_id'>{{=location.twilio_number_id}}</span><br>
-        Duty Calendar URL: <span id='calendar_url'>{{=location.calendar_url}}</span><br><br><br>
+        Duty Calendar URL: <span id='calendar_url'>{{=location.calendar_url}}</span><br>
+        <form name='sms_message' id='sms_message' onsubmit='saveSMSMessage();' method=POST action='{{=location.location_name}}/sms'>SMS Message: <input type='text' value='{{=location.sms_string}}' name='sms_string'><input type='submit' value='Change SMS Message'></form><br><br><br>
     </div>
 
     <b>User List:</b><br><br>
