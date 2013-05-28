@@ -41,7 +41,7 @@ def check_user():
     admin_group_id = db(db.auth_group.role == 'admin').select()[0].id
     #ra_group_id = db(db.auth_group.role == 'ra').select()[0].id
 
-    if len(eventLogin) == 1:
+    if len(eventLogin) < 3:
         session.flash = 'This is the first time you have logged into DutyCalls, please fill in your profile.'
         redirect(URL('profile','update'))
     if admin_group_id in auth.user_groups:
