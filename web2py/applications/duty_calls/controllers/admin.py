@@ -15,9 +15,13 @@ def locations():
                                    'fail_number',
                                    'is_res_life',
                                    'calendar_url',
-                                   'twilio_number_id'],
+                                   'twilio_number_id',
+                                   'sms_string'],
                          headers = {"current_on_duty":"Currently On Duty",
-                                    "calendar_url":"Duty Calendar URL"}
+                                    "calendar_url":"Duty Calendar URL",
+                                    "fail_name":"Defult Forward Location",
+                                    "fail_number":"Defult Forward Number",
+                                    "sms_string":"Text Alert Message"}
                         )
 
         return form
@@ -32,7 +36,13 @@ def locations():
                                      'calendar_url',
                                      'is_res_life',
                                      'fail_name',
-                                     'fail_number'],
+                                     'fail_number',
+                                     'sms_string'],
+                            headers = {"current_on_duty":"Currently On Duty",
+                                    "calendar_url":"Duty Calendar URL",
+                                    "fail_name":"Defult Forward Location",
+                                    "fail_number":"Defult Forward Number",
+                                    "sms_string":"Text Alert Message"},
                            ondelete = redirect_to_locations,
                            next = URL('locations',args=(location.location_name))
                           )
@@ -95,7 +105,8 @@ def add_location():
                                  'twilio_number_id',
                                  'is_res_life',
                                  'fail_name',
-                                 'fail_number']
+                                 'fail_number',
+                                 'sms_string']
                       ) 
     return dict(ret=form)
 
