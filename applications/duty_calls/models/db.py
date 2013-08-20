@@ -12,19 +12,22 @@ import json
 ## be redirected to HTTPS, uncomment the line below:
 # request.requires_https()
 
-if not request.env.web2py_runtime_gae:
+#if not request.env.web2py_runtime_gae:
     ## if NOT running on Google App Engine use SQLite or other DB
-    db = DAL('sqlite://storage.sqlite',pool_size=1,check_reserved=['all'])
+#    db = DAL('sqlite://storage.sqlite',pool_size=1,check_reserved=['all'])
 
-else:
+#else:
     ## connect to Google BigTable (optional 'google:datastore://namespace')
-    db = DAL('google:datastore')
+#    db = DAL('google:datastore')
     ## store sessions and tickets there
-    session.connect(request, response, db=db)
+#    session.connect(request, response, db=db)
     ## or store session in Memcache, Redis, etc.
     ## from gluon.contrib.memdb import MEMDB
     ## from google.appengine.api.memcache import Client
     ## session.connect(request, response, db = MEMDB(Client()))
+
+from gluon.contrib.heroku import get_db
+db = get_db(name=None, pool_size=10)
 
 
 ## This table will hold the Twilio API access stuff.
