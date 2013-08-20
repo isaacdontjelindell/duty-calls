@@ -12,20 +12,7 @@ import json
 ## be redirected to HTTPS, uncomment the line below:
 # request.requires_https()
 
-#if not request.env.web2py_runtime_gae:
-    ## if NOT running on Google App Engine use SQLite or other DB
-#    db = DAL('sqlite://storage.sqlite',pool_size=1,check_reserved=['all'])
-
-#else:
-    ## connect to Google BigTable (optional 'google:datastore://namespace')
-#    db = DAL('google:datastore')
-    ## store sessions and tickets there
-#    session.connect(request, response, db=db)
-    ## or store session in Memcache, Redis, etc.
-    ## from gluon.contrib.memdb import MEMDB
-    ## from google.appengine.api.memcache import Client
-    ## session.connect(request, response, db = MEMDB(Client()))
-
+## use the Heroku postgres database ##
 from gluon.contrib.heroku import get_db
 db = get_db(name=None, pool_size=10)
 
@@ -37,7 +24,7 @@ db.define_table('auth_tokens',
     Field('token_value','string')
 )
 
-## populate the auth_tokens table with dummy values so that GAE creates it ##
+## populate the auth_tokens table with dummy values ##
 q = db.auth_tokens.name == 'TWILIO_ACCOUNT_SID'
 sid = db(q).select()
 if len(sid) == 0:
@@ -128,14 +115,21 @@ auth.settings.register_onaccept = redirect_login
 
 
 ## create the admin and ra groups if they don't already exist
+global_admin = db(db.auth_group.role == 'global_admin').select()
+if len(global_admin) < 1:
+    db.auth_group.insert(role='global_admin', description='global/site administrator')
+
+location_admin = db(db.auth_group.role == 'location_admin').select()
+if len(location_admin) < 1:
+    db.auth_group.insert(role='location_admin', description='location/dorm administrator')
+
 ra = db(db.auth_group.role == 'ra').select()
 if len(ra) < 1:
     db.auth_group.insert(role='ra', description='resident assistant')
 
-admin = db(db.auth_group.role == 'admin').select()
-if len(admin) < 1:
-    db.auth_group.insert(role='admin', description='administrator')
-
+user = db(db.auth_group.role == 'user').select()
+if len(user) < 1:
+    db.auth_group.insert(role='user', description='general user - no permissions')
 
 ## create an initial admin user if there isn't already one
 if not db().select(db.auth_user.ALL).first():
@@ -144,10 +138,10 @@ if not db().select(db.auth_user.ALL).first():
                                   email = 'root@null.com',
                                   password = db.auth_user.password.validate('password')[0]
                                  )
-    admin_id = db(db.auth_group.role == 'admin').select()[0].id
-    ra_id = db(db.auth_group.role == 'ra').select()[0].id
-    db.auth_membership.insert(user_id=user_id, group_id=admin_id)
-    db.auth_membership.insert(user_id=user_id, group_id=ra_id)
+    global_admin_id = db(db.auth_group.role == 'global_admin').select()[0].id
+    location_admin_id = db(db.auth_group.role == 'location_admin').select()[0].id
+    db.auth_membership.insert(user_id=user_id, group_id=global_admin_id)
+    db.auth_membership.insert(user_id=user_id, group_id=location_admin_id)
 
 
 #########################################################################
