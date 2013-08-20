@@ -1,0 +1,40 @@
+{{extend 'layout.html'}}
+
+{{ if action == 'show_location': }}
+    <a href="{{ =URL('locations', args=(location_name,'update'))}}">Edit or delete this location</a>
+    {{=ret}}
+{{ pass }}
+
+{{ if action == 'update_location': }}
+    {{=ret}}
+{{ pass }}
+
+{{ if action == 'show_all_locations': }}
+    <table>
+        <tr>
+            <th>Location</th>
+            <th>Forwarding Number</th>
+            <th>Currently On Duty</th>
+            <th>Is Res Life</th>
+            <th>Fail Name</th>
+            <th>Fail Number</th>
+        </tr>
+        
+        {{ for loc in ret: }}
+            <tr>
+                <td>
+                    <a href="{{=URL('locations', args=(loc.location_name))}}">{{=loc.location_name}}</a>
+                </td>
+                <td>{{=loc.twilio_number}}</td>
+                <td>
+                    {{ for name in loc.current_on_duty: }}
+                        {{=name + ", "}}
+                    {{ pass }}
+                </td>
+                <td>{{=loc.is_res_life}}</td>
+                <td>{{=loc.fail_name}}</td>
+                <td>{{=loc.fail_number}}</td>
+            </tr>
+        {{ pass }}
+    </table>
+{{ pass }}
