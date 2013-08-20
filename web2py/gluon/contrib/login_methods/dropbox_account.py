@@ -52,12 +52,8 @@ class DropboxAccount(object):
         self.sess = session.DropboxSession(
             self.key, self.secret, self.access_type)
 
-    def get_user(self):
-        request = self.request
-        if not current.session.dropbox_request_token:
-            return None
-        elif not current.session.dropbox_access_token:
-
+    def get_token(self):
+        if not current.session.dropbox_access_token:            
             request_token = current.session.dropbox_request_token
             self.sess.set_request_token(request_token[0], request_token[1])
             access_token = self.sess.obtain_access_token(self.sess.token)
@@ -67,6 +63,10 @@ class DropboxAccount(object):
             access_token = current.session.dropbox_access_token
             self.sess.set_token(access_token[0], access_token[1])
 
+    def get_user(self):
+        if not current.session.dropbox_request_token:
+            return None
+        self.get_token()
         user = Storage()
         self.client = client.DropboxClient(self.sess)
         data = self.client.account_info()
@@ -94,27 +94,25 @@ class DropboxAccount(object):
         return form
 
     def logout_url(self, next="/"):
-        current.session.dropbox_request_token = None
+        self.sess.unlink()
         current.session.auth = None
-        redirect('https://www.dropbox.com/logout')
         return next
 
     def get_client(self):
-        access_token = current.session.dropbox_access_token
-        self.sess.set_token(access_token[0], access_token[1])
+        self.get_token()
         self.client = client.DropboxClient(self.sess)
 
     def put(self, filename, file):
         if not hasattr(self,'client'): self.get_client()
-        return json.loads(self.client.put_file(filename, file))['bytes']
+        return self.client.put_file(filename, file)['bytes']
 
-    def get(self, filename, file):
+    def get(self, filename):
         if not hasattr(self,'client'): self.get_client()
         return self.client.get_file(filename)
 
     def dir(self, path):
         if not hasattr(self,'client'): self.get_client()
-        return json.loads(self.client.metadata(path))
+        return self.client.metadata(path)
 
 
 def use_dropbox(auth, filename='private/dropbox.key', **kwargs):

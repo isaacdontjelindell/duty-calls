@@ -51,6 +51,7 @@ __all__ = [
     'IS_INT_IN_RANGE',
     'IS_IPV4',
     'IS_IPV6',
+    'IS_IPADDRESS',
     'IS_LENGTH',
     'IS_LIST_OF',
     'IS_LOWER',
@@ -314,15 +315,21 @@ class IS_LENGTH(Validator):
                     length = 0
             if self.minsize <= length <= self.maxsize:
                 return (value, None)
-        elif isinstance(value, (str, unicode, list)):
+        elif isinstance(value, str):
+            try:
+                lvalue = len(value.decode('utf8'))
+            except:
+                lvalue = len(value)
+            if self.minsize <= lvalue <= self.maxsize:
+                return (value, None)
+        elif isinstance(value, unicode):
+            if self.minsize <= len(value) <= self.maxsize:
+                return (value.encode('utf8'), None)
+        elif isinstance(value, (tuple, list)):
             if self.minsize <= len(value) <= self.maxsize:
                 return (value, None)
         elif self.minsize <= len(str(value)) <= self.maxsize:
-            try:
-                value.decode('utf8')
-                return (value, None)
-            except:
-                pass
+            return (str(value), None)
         return (value, translate(self.error_message)
                 % dict(min=self.minsize, max=self.maxsize))
 
@@ -538,7 +545,7 @@ class IS_IN_DB(Validator):
             records = self.dbset(table).select(table.ALL, **dd)
         self.theset = [str(r[self.kfield]) for r in records]
         if isinstance(self.label, str):
-            self.labels = [self.label % dict(r) for r in records]
+            self.labels = [self.label % r for r in records]
         else:
             self.labels = [self.label(r) for r in records]
 
@@ -648,11 +655,11 @@ class IS_NOT_IN_DB(Validator):
         id = self.record_id
         if isinstance(id, dict):
             fields = [table[f] for f in id]
-            row = subset.select(*fields, **dict(limitby=(0, 1))).first()
+            row = subset.select(*fields, **dict(limitby=(0, 1), orderby_on_limitby=False)).first()
             if row and any(str(row[f]) != str(id[f]) for f in id):
                 return (value, translate(self.error_message))
         else:
-            row = subset.select(table._id, field, limitby=(0, 1)).first()
+            row = subset.select(table._id, field, limitby=(0, 1), orderby_on_limitby=False).first()
             if row and str(row.id) != str(id):
                 return (value, translate(self.error_message))
         return (value, None)
@@ -706,17 +713,20 @@ class IS_INT_IN_RANGE(Validator):
         self.minimum = self.maximum = None
         if minimum is None:
             if maximum is None:
-                self.error_message = error_message or 'enter an integer'
+                self.error_message = translate(
+                    error_message or 'enter an integer')
             else:
                 self.maximum = int(maximum)
                 if error_message is None:
-                    error_message = 'enter an integer less than or equal to %(max)g'
+                    error_message = \
+                        'enter an integer less than or equal to %(max)g'
                 self.error_message = translate(
                     error_message) % dict(max=self.maximum - 1)
         elif maximum is None:
             self.minimum = int(minimum)
             if error_message is None:
-                error_message = 'enter an integer greater than or equal to %(min)g'
+                error_message = \
+                    'enter an integer greater than or equal to %(min)g'
             self.error_message = translate(
                 error_message) % dict(min=self.minimum)
         else:
@@ -2510,17 +2520,18 @@ class IS_UPPER(Validator):
         return (value.decode('utf8').upper().encode('utf8'), None)
 
 
-def urlify(value, maxlen=80, keep_underscores=False):
+def urlify(s, maxlen=80, keep_underscores=False):
     """
     Convert incoming string to a simplified ASCII subset.
     if (keep_underscores): underscores are retained in the string
     else: underscores are translated to hyphens (default)
     """
-    s = value.lower()                     # to lowercase
-    s = s.decode('utf-8')                 # to utf-8
+    if isinstance(s, str):
+        s = s.decode('utf-8')             # to unicode
+    s = s.lower()                         # to lowercase
     s = unicodedata.normalize('NFKD', s)  # normalize eg è => e, ñ => n
-    s = s.encode('ASCII', 'ignore')       # encode as ASCII
-    s = re.sub('&\w+;', '', s)            # strip html entities
+    s = s.encode('ascii', 'ignore')       # encode as ASCII
+    s = re.sub('&\w+?;', '', s)           # strip html entities
     if keep_underscores:
         s = re.sub('\s+', '-', s)         # whitespace to hyphens
         s = re.sub('[^\w\-]', '', s)
@@ -2654,8 +2665,8 @@ class IS_EMPTY_OR(Validator):
         if hasattr(other, 'options'):
             self.options = self._options
 
-    def _options(self):
-        options = self.other.options()
+    def _options(self, zero=False):
+        options = self.other.options(zero=zero)
         if (not options or options[0][0] != '') and not self.multiple:
             options.insert(0, ('', ''))
         return options
@@ -3560,6 +3571,216 @@ class IS_IPV6(Validator):
             return (value, None)
 
         return (value, translate(self.error_message))
+
+
+class IS_IPADDRESS(Validator):
+    """
+    Checks if field's value is an IP Address (v4 or v6). Can be set to force
+    addresses from within a specific range. Checks are done with the correct
+    IS_IPV4 and IS_IPV6 validators.
+
+    Uses ipaddress library if found, falls back to PEP-3144 ipaddr.py from
+    Google (in contrib).
+
+    Universal arguments:
+
+    minip: lowest allowed address; accepts:
+           str, eg. 192.168.0.1
+           list or tuple of octets, eg. [192, 168, 0, 1]
+    maxip: highest allowed address; same as above
+    invert: True to allow addresses only from outside of given range; note
+            that range boundaries are not matched this way
+
+    IPv4 specific arguments:
+
+    is_localhost: localhost address treatment:
+                  None (default): indifferent
+                  True (enforce): query address must match localhost address
+                                  (127.0.0.1)
+                  False (forbid): query address must not match localhost
+                                  address
+    is_private: same as above, except that query address is checked against
+                two address ranges: 172.16.0.0 - 172.31.255.255 and
+                192.168.0.0 - 192.168.255.255
+    is_automatic: same as above, except that query address is checked against
+                  one address range: 169.254.0.0 - 169.254.255.255
+    is_ipv4: None (default): indifferent
+             True (enforce): must be an IPv4 address
+             False (forbid): must NOT be an IPv4 address
+
+    IPv6 specific arguments:
+
+    is_link_local: Same as above but uses fe80::/10 range
+    is_reserved: Same as above but uses IETF reserved range
+    is_mulicast: Same as above but uses ff00::/8 range
+    is_routeable: Similar to above but enforces not private, link_local,
+                  reserved or multicast
+    is_6to4: Same as above but uses 2002::/16 range
+    is_teredo: Same as above but uses 2001::/32 range
+    subnets: value must be a member of at least one from list of subnets
+    is_ipv6: None (default): indifferent
+             True (enforce): must be an IPv6 address
+             False (forbid): must NOT be an IPv6 address
+
+    Minip and maxip may also be lists or tuples of addresses in all above
+    forms (str, int, list / tuple), allowing setup of multiple address ranges:
+
+        minip = (minip1, minip2, ... minipN)
+                   |       |           |
+                   |       |           |
+        maxip = (maxip1, maxip2, ... maxipN)
+
+    Longer iterable will be truncated to match length of shorter one.
+
+    >>> IS_IPADDRESS()('192.168.1.5')
+    ('192.168.1.5', None)
+    >>> IS_IPADDRESS(is_ipv6=False)('192.168.1.5')
+    ('192.168.1.5', None)
+    >>> IS_IPADDRESS()('255.255.255.255')
+    ('255.255.255.255', None)
+    >>> IS_IPADDRESS()('192.168.1.5 ')
+    ('192.168.1.5 ', 'enter valid IP address')
+    >>> IS_IPADDRESS()('192.168.1.1.5')
+    ('192.168.1.1.5', 'enter valid IP address')
+    >>> IS_IPADDRESS()('123.123')
+    ('123.123', 'enter valid IP address')
+    >>> IS_IPADDRESS()('1111.2.3.4')
+    ('1111.2.3.4', 'enter valid IP address')
+    >>> IS_IPADDRESS()('0111.2.3.4')
+    ('0111.2.3.4', 'enter valid IP address')
+    >>> IS_IPADDRESS()('256.2.3.4')
+    ('256.2.3.4', 'enter valid IP address')
+    >>> IS_IPADDRESS()('300.2.3.4')
+    ('300.2.3.4', 'enter valid IP address')
+    >>> IS_IPADDRESS(minip='192.168.1.0', maxip='192.168.1.255')('192.168.1.100')
+    ('192.168.1.100', None)
+    >>> IS_IPADDRESS(minip='1.2.3.5', maxip='1.2.3.9', error_message='bad ip')('1.2.3.4')
+    ('1.2.3.4', 'bad ip')
+    >>> IS_IPADDRESS(maxip='1.2.3.4', invert=True)('127.0.0.1')
+    ('127.0.0.1', None)
+    >>> IS_IPADDRESS(maxip='192.168.1.4', invert=True)('192.168.1.4')
+    ('192.168.1.4', 'enter valid IP address')
+    >>> IS_IPADDRESS(is_localhost=True)('127.0.0.1')
+    ('127.0.0.1', None)
+    >>> IS_IPADDRESS(is_localhost=True)('192.168.1.10')
+    ('192.168.1.10', 'enter valid IP address')
+    >>> IS_IPADDRESS(is_localhost=False)('127.0.0.1')
+    ('127.0.0.1', 'enter valid IP address')
+    >>> IS_IPADDRESS(maxip='100.0.0.0', is_localhost=True)('127.0.0.1')
+    ('127.0.0.1', 'enter valid IP address')
+
+    >>> IS_IPADDRESS()('fe80::126c:8ffa:fe22:b3af')
+    ('fe80::126c:8ffa:fe22:b3af', None)
+    >>> IS_IPADDRESS(is_ipv4=False)('fe80::126c:8ffa:fe22:b3af')
+    ('fe80::126c:8ffa:fe22:b3af', None)
+    >>> IS_IPADDRESS()('fe80::126c:8ffa:fe22:b3af  ')
+    ('fe80::126c:8ffa:fe22:b3af  ', 'enter valid IP address')
+    >>> IS_IPADDRESS(is_ipv4=True)('fe80::126c:8ffa:fe22:b3af')
+    ('fe80::126c:8ffa:fe22:b3af', 'enter valid IP address')
+    >>> IS_IPADDRESS(is_ipv6=True)('192.168.1.1')
+    ('192.168.1.1', 'enter valid IP address')
+    >>> IS_IPADDRESS(is_ipv6=True, error_message='bad ip')('192.168.1.1')
+    ('192.168.1.1', 'bad ip')
+    >>> IS_IPADDRESS(is_link_local=True)('fe80::126c:8ffa:fe22:b3af')
+    ('fe80::126c:8ffa:fe22:b3af', None)
+    >>> IS_IPADDRESS(is_link_local=False)('fe80::126c:8ffa:fe22:b3af')
+    ('fe80::126c:8ffa:fe22:b3af', 'enter valid IP address')
+    >>> IS_IPADDRESS(is_link_local=True)('2001::126c:8ffa:fe22:b3af')
+    ('2001::126c:8ffa:fe22:b3af', 'enter valid IP address')
+    >>> IS_IPADDRESS(is_multicast=True)('2001::126c:8ffa:fe22:b3af')
+    ('2001::126c:8ffa:fe22:b3af', 'enter valid IP address')
+    >>> IS_IPADDRESS(is_multicast=True)('ff00::126c:8ffa:fe22:b3af')
+    ('ff00::126c:8ffa:fe22:b3af', None)
+    >>> IS_IPADDRESS(is_routeable=True)('2001::126c:8ffa:fe22:b3af')
+    ('2001::126c:8ffa:fe22:b3af', None)
+    >>> IS_IPADDRESS(is_routeable=True)('ff00::126c:8ffa:fe22:b3af')
+    ('ff00::126c:8ffa:fe22:b3af', 'enter valid IP address')
+    >>> IS_IPADDRESS(subnets='2001::/32')('2001::8ffa:fe22:b3af')
+    ('2001::8ffa:fe22:b3af', None)
+    >>> IS_IPADDRESS(subnets='fb00::/8')('2001::8ffa:fe22:b3af')
+    ('2001::8ffa:fe22:b3af', 'enter valid IP address')
+    >>> IS_IPADDRESS(subnets=['fc00::/8','2001::/32'])('2001::8ffa:fe22:b3af')
+    ('2001::8ffa:fe22:b3af', None)
+    >>> IS_IPADDRESS(subnets='invalidsubnet')('2001::8ffa:fe22:b3af')
+    ('2001::8ffa:fe22:b3af', 'invalid subnet provided')
+    """
+    def __init__(
+            self,
+            minip='0.0.0.0',
+            maxip='255.255.255.255',
+            invert=False,
+            is_localhost=None,
+            is_private=None,
+            is_automatic=None,
+            is_ipv4=None,
+            is_link_local=None,
+            is_reserved=None,
+            is_multicast=None,
+            is_routeable=None,
+            is_6to4=None,
+            is_teredo=None,
+            subnets=None,
+            is_ipv6=None,
+            error_message='enter valid IP address'):
+        self.minip = minip,
+        self.maxip = maxip,
+        self.invert = invert
+        self.is_localhost = is_localhost
+        self.is_private = is_private
+        self.is_automatic = is_automatic
+        self.is_ipv4 = is_ipv4
+        self.is_private = is_private
+        self.is_link_local = is_link_local
+        self.is_reserved = is_reserved
+        self.is_multicast = is_multicast
+        self.is_routeable = is_routeable
+        self.is_6to4 = is_6to4
+        self.is_teredo = is_teredo
+        self.subnets = subnets
+        self.is_ipv6 = is_ipv6
+        self.error_message = error_message
+
+    def __call__(self, value):
+        try:
+            import ipaddress
+        except ImportError:
+            from contrib import ipaddr as ipaddress
+
+        try:
+            ip = ipaddress.ip_address(value)
+        except ValueError, e:
+            return (value, translate(self.error_message))
+
+        if self.is_ipv4 and isinstance(ip, ipaddress.IPv6Address):
+            retval = (value, translate(self.error_message))
+        elif self.is_ipv6 and isinstance(ip, ipaddress.IPv4Address):
+            retval = (value, translate(self.error_message))
+        elif self.is_ipv4 or isinstance(ip, ipaddress.IPv4Address):
+            retval = IS_IPV4(
+                minip=self.minip,
+                maxip=self.maxip,
+                invert=self.invert,
+                is_localhost=self.is_localhost,
+                is_private=self.is_private,
+                is_automatic=self.is_automatic,
+                error_message=self.error_message
+                )(value)
+        elif self.is_ipv6 or isinstance(ip, ipaddress.IPv6Address):
+            retval = IS_IPV6(
+                is_private=self.is_private,
+                is_link_local=self.is_link_local,
+                is_reserved=self.is_reserved,
+                is_multicast=self.is_multicast,
+                is_routeable=self.is_routeable,
+                is_6to4=self.is_6to4,
+                is_teredo=self.is_teredo,
+                subnets=self.subnets,
+                error_message=self.error_message
+                )(value)
+        else:
+            retval = (value, translate(self.error_message))
+
+        return retval
 
 
 if __name__ == '__main__':

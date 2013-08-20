@@ -123,14 +123,15 @@ class HTTP(BaseException):
 
         message elements that are not defined are omitted
         """
-        msg = '%(status)d'
+        msg = '%(status)s'
         if self.status in defined_status:
-            msg = '%(status)d %(defined_status)s'
+            msg = '%(status)s %(defined_status)s'
         if 'web2py_error' in self.headers:
             msg += ' [%(web2py_error)s]'
-        return msg % dict(status=self.status,
-                          defined_status=defined_status.get(self.status),
-                          web2py_error=self.headers.get('web2py_error'))
+        return msg % dict(
+            status=self.status,
+            defined_status=defined_status.get(self.status),
+            web2py_error=self.headers.get('web2py_error'))
 
     def __str__(self):
         "stringify me"

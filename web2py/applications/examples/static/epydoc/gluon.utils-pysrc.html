@@ -442,15 +442,18 @@ gluon.widget.web2pyDialog.error" class="py-name" href="#" onclick="return doclin
 <a name="L295"></a><tt class="py-lineno">295</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">True</tt> </tt>
 </div><a name="L296"></a><tt class="py-lineno">296</tt>  <tt class="py-line"> </tt>
 <a name="L297"></a><tt class="py-lineno">297</tt>  <tt class="py-line"> </tt>
-<a name="is_loopback_ip_address"></a><div id="is_loopback_ip_address-def"><a name="L298"></a><tt class="py-lineno">298</tt> <a class="py-toggle" href="#" id="is_loopback_ip_address-toggle" onclick="return toggle('is_loopback_ip_address');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="gluon.utils-module.html#is_loopback_ip_address">is_loopback_ip_address</a><tt class="py-op">(</tt><tt class="py-param">ip</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="is_loopback_ip_address-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="is_loopback_ip_address-expanded"><a name="L299"></a><tt class="py-lineno">299</tt>  <tt class="py-line">    <tt class="py-docstring">"""Determines whether the IP address appears to be a loopback address.</tt> </tt>
-<a name="L300"></a><tt class="py-lineno">300</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
-<a name="L301"></a><tt class="py-lineno">301</tt>  <tt class="py-line"><tt class="py-docstring">    This assumes that the IP is valid.  The IPv6 check is limited to '::1'.</tt> </tt>
-<a name="L302"></a><tt class="py-lineno">302</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
-<a name="L303"></a><tt class="py-lineno">303</tt>  <tt class="py-line"><tt class="py-docstring">    """</tt> </tt>
-<a name="L304"></a><tt class="py-lineno">304</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-keyword">not</tt> <tt class="py-name">ip</tt><tt class="py-op">:</tt> </tt>
-<a name="L305"></a><tt class="py-lineno">305</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">False</tt> </tt>
-<a name="L306"></a><tt class="py-lineno">306</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-name">ip</tt><tt class="py-op">.</tt><tt id="link-85" class="py-name"><a title="gluon.dal.BaseAdapter.count
+<a name="is_loopback_ip_address"></a><div id="is_loopback_ip_address-def"><a name="L298"></a><tt class="py-lineno">298</tt> <a class="py-toggle" href="#" id="is_loopback_ip_address-toggle" onclick="return toggle('is_loopback_ip_address');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="gluon.utils-module.html#is_loopback_ip_address">is_loopback_ip_address</a><tt class="py-op">(</tt><tt class="py-param">ip</tt><tt class="py-op">=</tt><tt class="py-name">None</tt><tt class="py-op">,</tt> <tt class="py-param">addrinfo</tt><tt class="py-op">=</tt><tt class="py-name">None</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="is_loopback_ip_address-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="is_loopback_ip_address-expanded"><a name="L299"></a><tt class="py-lineno">299</tt>  <tt class="py-line">    <tt class="py-docstring">"""</tt> </tt>
+<a name="L300"></a><tt class="py-lineno">300</tt>  <tt class="py-line"><tt class="py-docstring">    Determines whether the address appears to be a loopback address.</tt> </tt>
+<a name="L301"></a><tt class="py-lineno">301</tt>  <tt class="py-line"><tt class="py-docstring">    This assumes that the IP is valid.</tt> </tt>
+<a name="L302"></a><tt class="py-lineno">302</tt>  <tt class="py-line"><tt class="py-docstring">    """</tt> </tt>
+<a name="L303"></a><tt class="py-lineno">303</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-name">addrinfo</tt><tt class="py-op">:</tt> <tt class="py-comment"># see socket.getaddrinfo() for layout of addrinfo tuple</tt> </tt>
+<a name="L304"></a><tt class="py-lineno">304</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">addrinfo</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt> <tt class="py-op">==</tt> <tt id="link-85" class="py-name"><a title="gluon.rocket.Connection.socket" class="py-name" href="#" onclick="return doclink('link-85', 'socket', 'link-0');">socket</a></tt><tt class="py-op">.</tt><tt class="py-name">AF_INET</tt> <tt class="py-keyword">or</tt> <tt class="py-name">addrinfo</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt> <tt class="py-op">==</tt> <tt id="link-86" class="py-name"><a title="gluon.rocket.Connection.socket" class="py-name" href="#" onclick="return doclink('link-86', 'socket', 'link-0');">socket</a></tt><tt class="py-op">.</tt><tt class="py-name">AF_INET6</tt><tt class="py-op">:</tt> </tt>
+<a name="L305"></a><tt class="py-lineno">305</tt>  <tt class="py-line">            <tt class="py-name">ip</tt> <tt class="py-op">=</tt> <tt class="py-name">addrinfo</tt><tt class="py-op">[</tt><tt class="py-number">4</tt><tt class="py-op">]</tt> </tt>
+<a name="L306"></a><tt class="py-lineno">306</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-keyword">not</tt> <tt class="py-name">isinstance</tt><tt class="py-op">(</tt><tt class="py-name">ip</tt><tt class="py-op">,</tt> <tt class="py-name">basestring</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L307"></a><tt class="py-lineno">307</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">False</tt> </tt>
+<a name="L308"></a><tt class="py-lineno">308</tt>  <tt class="py-line">    <tt class="py-comment"># IPv4 or IPv6-embedded IPv4 or IPv4-compatible IPv6</tt> </tt>
+<a name="L309"></a><tt class="py-lineno">309</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-name">ip</tt><tt class="py-op">.</tt><tt id="link-87" class="py-name"><a title="gluon.dal.BaseAdapter.count
 gluon.dal.CouchDBAdapter.count
 gluon.dal.Field.count
 gluon.dal.GoogleDatastoreAdapter.count
@@ -458,14 +461,28 @@ gluon.dal.IMAPAdapter.count
 gluon.dal.LazySet.count
 gluon.dal.MongoDBAdapter.count
 gluon.dal.Set.count
-gluon.utf8.Utf8.count" class="py-name" href="#" onclick="return doclink('link-85', 'count', 'link-70');">count</a></tt><tt class="py-op">(</tt><tt class="py-string">'.'</tt><tt class="py-op">)</tt> <tt class="py-op">==</tt> <tt class="py-number">3</tt><tt class="py-op">:</tt>  <tt class="py-comment"># IPv4</tt> </tt>
-<a name="L307"></a><tt class="py-lineno">307</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">ip</tt><tt class="py-op">.</tt><tt id="link-86" class="py-name"><a title="gluon.dal.Expression.startswith
+gluon.utf8.Utf8.count" class="py-name" href="#" onclick="return doclink('link-87', 'count', 'link-70');">count</a></tt><tt class="py-op">(</tt><tt class="py-string">'.'</tt><tt class="py-op">)</tt> <tt class="py-op">==</tt> <tt class="py-number">3</tt><tt class="py-op">:</tt>   </tt>
+<a name="L310"></a><tt class="py-lineno">310</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">ip</tt><tt class="py-op">.</tt><tt id="link-88" class="py-name"><a title="gluon.dal.Expression.lower
+gluon.utf8.Utf8.lower" class="py-name" href="#" onclick="return doclink('link-88', 'lower', 'link-22');">lower</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">.</tt><tt id="link-89" class="py-name"><a title="gluon.dal.Expression.startswith
 gluon.dal.SQLCustomType.startswith
-gluon.utf8.Utf8.startswith" class="py-name" href="#" onclick="return doclink('link-86', 'startswith', 'link-15');">startswith</a></tt><tt class="py-op">(</tt><tt class="py-string">'127'</tt><tt class="py-op">)</tt> <tt class="py-keyword">or</tt> <tt class="py-name">ip</tt><tt class="py-op">.</tt><tt id="link-87" class="py-name"><a title="gluon.dal.Expression.startswith
-gluon.dal.SQLCustomType.startswith
-gluon.utf8.Utf8.startswith" class="py-name" href="#" onclick="return doclink('link-87', 'startswith', 'link-15');">startswith</a></tt><tt class="py-op">(</tt><tt class="py-string">'::ffff:127'</tt><tt class="py-op">)</tt> </tt>
-<a name="L308"></a><tt class="py-lineno">308</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">ip</tt> <tt class="py-op">==</tt> <tt class="py-string">'::1'</tt>  <tt class="py-comment"># IPv6</tt> </tt>
-</div><a name="L309"></a><tt class="py-lineno">309</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+gluon.utf8.Utf8.startswith" class="py-name" href="#" onclick="return doclink('link-89', 'startswith', 'link-15');">startswith</a></tt><tt class="py-op">(</tt><tt class="py-op">(</tt><tt class="py-string">'127'</tt><tt class="py-op">,</tt> <tt class="py-string">'::127'</tt><tt class="py-op">,</tt> <tt class="py-string">'0:0:0:0:0:0:127'</tt><tt class="py-op">,</tt> </tt>
+<a name="L311"></a><tt class="py-lineno">311</tt>  <tt class="py-line">                                      <tt class="py-string">'::ffff:127'</tt><tt class="py-op">,</tt> <tt class="py-string">'0:0:0:0:0:ffff:127'</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L312"></a><tt class="py-lineno">312</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">ip</tt> <tt class="py-op">==</tt> <tt class="py-string">'::1'</tt> <tt class="py-keyword">or</tt> <tt class="py-name">ip</tt> <tt class="py-op">==</tt> <tt class="py-string">'0:0:0:0:0:0:0:1'</tt>   <tt class="py-comment"># IPv6 loopback</tt> </tt>
+</div><a name="L313"></a><tt class="py-lineno">313</tt>  <tt class="py-line"> </tt>
+<a name="L314"></a><tt class="py-lineno">314</tt>  <tt class="py-line"> </tt>
+<a name="getipaddrinfo"></a><div id="getipaddrinfo-def"><a name="L315"></a><tt class="py-lineno">315</tt> <a class="py-toggle" href="#" id="getipaddrinfo-toggle" onclick="return toggle('getipaddrinfo');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="gluon.utils-module.html#getipaddrinfo">getipaddrinfo</a><tt class="py-op">(</tt><tt class="py-param">host</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="getipaddrinfo-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="getipaddrinfo-expanded"><a name="L316"></a><tt class="py-lineno">316</tt>  <tt class="py-line">    <tt class="py-docstring">"""</tt> </tt>
+<a name="L317"></a><tt class="py-lineno">317</tt>  <tt class="py-line"><tt class="py-docstring">    Filter out non-IP and bad IP addresses from getaddrinfo</tt> </tt>
+<a name="L318"></a><tt class="py-lineno">318</tt>  <tt class="py-line"><tt class="py-docstring">    """</tt> </tt>
+<a name="L319"></a><tt class="py-lineno">319</tt>  <tt class="py-line">    <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L320"></a><tt class="py-lineno">320</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-op">[</tt><tt class="py-name">addrinfo</tt> <tt class="py-keyword">for</tt> <tt class="py-name">addrinfo</tt> <tt class="py-keyword">in</tt> <tt id="link-90" class="py-name"><a title="gluon.rocket.Connection.socket" class="py-name" href="#" onclick="return doclink('link-90', 'socket', 'link-0');">socket</a></tt><tt class="py-op">.</tt><tt class="py-name">getaddrinfo</tt><tt class="py-op">(</tt><tt class="py-name">host</tt><tt class="py-op">,</tt> <tt class="py-name">None</tt><tt class="py-op">)</tt> </tt>
+<a name="L321"></a><tt class="py-lineno">321</tt>  <tt class="py-line">                <tt class="py-keyword">if</tt> <tt class="py-op">(</tt><tt class="py-name">addrinfo</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt> <tt class="py-op">==</tt> <tt id="link-91" class="py-name"><a title="gluon.rocket.Connection.socket" class="py-name" href="#" onclick="return doclink('link-91', 'socket', 'link-0');">socket</a></tt><tt class="py-op">.</tt><tt class="py-name">AF_INET</tt> <tt class="py-keyword">or</tt>  </tt>
+<a name="L322"></a><tt class="py-lineno">322</tt>  <tt class="py-line">                    <tt class="py-name">addrinfo</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt> <tt class="py-op">==</tt> <tt id="link-92" class="py-name"><a title="gluon.rocket.Connection.socket" class="py-name" href="#" onclick="return doclink('link-92', 'socket', 'link-0');">socket</a></tt><tt class="py-op">.</tt><tt class="py-name">AF_INET6</tt><tt class="py-op">)</tt> </tt>
+<a name="L323"></a><tt class="py-lineno">323</tt>  <tt class="py-line">                <tt class="py-keyword">and</tt> <tt class="py-name">isinstance</tt><tt class="py-op">(</tt><tt class="py-name">addrinfo</tt><tt class="py-op">[</tt><tt class="py-number">4</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt><tt class="py-op">,</tt> <tt class="py-name">basestring</tt><tt class="py-op">)</tt><tt class="py-op">]</tt> </tt>
+<a name="L324"></a><tt class="py-lineno">324</tt>  <tt class="py-line">    <tt class="py-keyword">except</tt> <tt id="link-93" class="py-name"><a title="gluon.rocket.Connection.socket" class="py-name" href="#" onclick="return doclink('link-93', 'socket', 'link-0');">socket</a></tt><tt class="py-op">.</tt><tt id="link-94" class="py-name"><a title="gluon.tools.Service.error
+gluon.widget.web2pyDialog.error" class="py-name" href="#" onclick="return doclink('link-94', 'error', 'link-75');">error</a></tt><tt class="py-op">:</tt> </tt>
+<a name="L325"></a><tt class="py-lineno">325</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
+</div><a name="L326"></a><tt class="py-lineno">326</tt>  <tt class="py-line"> </tt><script type="text/javascript">
 <!--
 expandto(location.href);
 // -->
@@ -503,7 +520,7 @@ expandto(location.href);
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Apr  6 17:41:08 2013
+    Generated by Epydoc 3.0.1 on Thu Jun  6 15:39:54 2013
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

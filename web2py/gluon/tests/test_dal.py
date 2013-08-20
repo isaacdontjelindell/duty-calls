@@ -236,9 +236,12 @@ class TestInsert(unittest.TestCase):
         self.assertEqual(db.tt.insert(aa='1'), 2)
         self.assertEqual(db.tt.insert(aa='1'), 3)
         self.assertEqual(db(db.tt.aa == '1').count(), 3)
+        self.assertEqual(db(db.tt.aa == '2').isempty(), True)
         self.assertEqual(db(db.tt.aa == '1').update(aa='2'), 3)
         self.assertEqual(db(db.tt.aa == '2').count(), 3)
+        self.assertEqual(db(db.tt.aa == '2').isempty(), False)
         self.assertEqual(db(db.tt.aa == '2').delete(), 3)
+        self.assertEqual(db(db.tt.aa == '2').isempty(), True)
         db.tt.drop()
 
 
@@ -270,6 +273,20 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(db((db.tt.aa > '1') | (db.tt.aa < '3')).count(), 3)
         self.assertEqual(db((db.tt.aa > '1') & ~(db.tt.aa > '2')).count(), 1)
         self.assertEqual(db(~(db.tt.aa > '1') & (db.tt.aa > '2')).count(), 0)
+        db.tt.drop()
+
+class TestAddMethod(unittest.TestCase):
+
+    def testRun(self):
+        db = DAL(DEFAULT_URI, check_reserved=['all'])
+        db.define_table('tt', Field('aa'))
+        @db.tt.add_method.all
+        def select_all(table,orderby=None):
+            return table._db(table).select(orderby=orderby)
+        self.assertEqual(db.tt.insert(aa='1'), 1)
+        self.assertEqual(db.tt.insert(aa='2'), 2)
+        self.assertEqual(db.tt.insert(aa='3'), 3)
+        self.assertEqual(len(db.tt.all()), 3)
         db.tt.drop()
 
 

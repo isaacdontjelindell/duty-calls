@@ -75,7 +75,7 @@
 <dl><dt>Known Subclasses:</dt>
 <dd>
       <ul class="subclass-list">
-<li class="private"><a href="gluon.dal.MSSQL2Adapter-class.html" onclick="show_private();">MSSQL2Adapter</a></li><li class="private">, <a href="gluon.dal.MSSQL3Adapter-class.html" onclick="show_private();">MSSQL3Adapter</a></li><li class="private">, <a href="gluon.dal.SybaseAdapter-class.html" onclick="show_private();">SybaseAdapter</a></li>  </ul>
+<li class="private"><a href="gluon.dal.MSSQL2Adapter-class.html" onclick="show_private();">MSSQL2Adapter</a></li><li class="private">, <a href="gluon.dal.MSSQL3Adapter-class.html" onclick="show_private();">MSSQL3Adapter</a></li><li class="private">, <a href="gluon.dal.SybaseAdapter-class.html" onclick="show_private();">SybaseAdapter</a></li><li class="private">, <a href="gluon.dal.VerticaAdapter-class.html" onclick="show_private();">VerticaAdapter</a></li>  </ul>
 </dd></dl>
 
 <hr />
@@ -283,7 +283,7 @@
         <span class="summary-sig-arg">pool_size</span>=<span class="summary-sig-default">0</span>,
         <span class="summary-sig-arg">folder</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">db_codec</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string">UTF-8</code><code class="variable-quote">'</code></span>,
-        <span class="summary-sig-arg">credential_decoder</span>=<span class="summary-sig-default">&lt;function IDENTITY at 0x1ac7050&gt;</span>,
+        <span class="summary-sig-arg">credential_decoder</span>=<span class="summary-sig-default">&lt;function IDENTITY at 0x2449ed8&gt;</span>,
         <span class="summary-sig-arg">driver_args</span>=<span class="summary-sig-default"><code class="variable-group">{</code><code class="variable-group">}</code></span>,
         <span class="summary-sig-arg">adapter_args</span>=<span class="summary-sig-default"><code class="variable-group">{</code><code class="variable-group">}</code></span>,
         <span class="summary-sig-arg">do_connect</span>=<span class="summary-sig-default">True</span>,
@@ -309,22 +309,6 @@
         <span class="summary-sig-arg">table</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="gluon.dal-pysrc.html#MSSQLAdapter.lastrowid">source&nbsp;code</a></span>
-            
-          </td>
-        </tr>
-      </table>
-      
-    </td>
-  </tr>
-<tr>
-    <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
-    </td><td class="summary">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td><span class="summary-sig"><a href="gluon.dal.MSSQLAdapter-class.html#integrity_error_class" class="summary-sig-name">integrity_error_class</a>(<span class="summary-sig-arg">self</span>)</span></td>
-          <td align="right" valign="top">
-            <span class="codelink"><a href="gluon.dal-pysrc.html#MSSQLAdapter.integrity_error_class">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -613,11 +597,9 @@
       <code><a href="gluon.dal.BaseAdapter-class.html#get_table">get_table</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#id_query">id_query</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#insert">insert</a></code>,
-      <code><a href="gluon.dal.BaseAdapter-class.html#integrity_error">integrity_error</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#is_numerical_type">is_numerical_type</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#log_execute">log_execute</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#migrate_table">migrate_table</a></code>,
-      <code><a href="gluon.dal.BaseAdapter-class.html#operational_error">operational_error</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#parse">parse</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#parse_blob">parse_blob</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#parse_boolean">parse_boolean</a></code>,
@@ -641,6 +623,7 @@
       <code><a href="gluon.dal.BaseAdapter-class.html#select">select</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#sequence_name">sequence_name</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#smart_adapt">smart_adapt</a></code>,
+      <code><a href="gluon.dal.BaseAdapter-class.html#table_alias">table_alias</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#tables">tables</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#trigger_name">trigger_name</a></code>,
       <code><a href="gluon.dal.BaseAdapter-class.html#truncate">truncate</a></code>,
@@ -1101,7 +1084,7 @@ _action)s',
         <span class="sig-arg">pool_size</span>=<span class="sig-default">0</span>,
         <span class="sig-arg">folder</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">db_codec</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string">UTF-8</code><code class="variable-quote">'</code></span>,
-        <span class="sig-arg">credential_decoder</span>=<span class="sig-default">&lt;function IDENTITY at 0x1ac7050&gt;</span>,
+        <span class="sig-arg">credential_decoder</span>=<span class="sig-default">&lt;function IDENTITY at 0x2449ed8&gt;</span>,
         <span class="sig-arg">driver_args</span>=<span class="sig-default"><code class="variable-group">{</code><code class="variable-group">}</code></span>,
         <span class="sig-arg">adapter_args</span>=<span class="sig-default"><code class="variable-group">{</code><code class="variable-group">}</code></span>,
         <span class="sig-arg">do_connect</span>=<span class="sig-default">True</span>,
@@ -1142,28 +1125,6 @@ _action)s',
   <dl class="fields">
     <dt>Overrides:
         <a href="gluon.dal.BaseAdapter-class.html#lastrowid">BaseAdapter.lastrowid</a>
-    </dt>
-  </dl>
-</td></tr></table>
-</div>
-<a name="integrity_error_class"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">integrity_error_class</span>(<span class="sig-arg">self</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="gluon.dal-pysrc.html#MSSQLAdapter.integrity_error_class">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  
-  <dl class="fields">
-    <dt>Overrides:
-        <a href="gluon.dal.BaseAdapter-class.html#integrity_error_class">BaseAdapter.integrity_error_class</a>
     </dt>
   </dl>
 </td></tr></table>
@@ -1379,7 +1340,7 @@ re.compile(r'<code class="re-group">(?P&lt;</code><code class="re-ref">argkey</c
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Apr  6 17:40:12 2013
+    Generated by Epydoc 3.0.1 on Thu Jun  6 15:39:47 2013
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

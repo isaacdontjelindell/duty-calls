@@ -15,7 +15,6 @@ import cStringIO
 import time
 import thread
 import threading
-import re
 import os
 import socket
 import signal
@@ -25,10 +24,10 @@ import newcron
 import getpass
 import main
 
-from fileutils import w2p_pack, read_file, write_file, create_welcome_w2p
+from fileutils import read_file, write_file, create_welcome_w2p
 from settings import global_settings
 from shell import run, test
-from utils import is_valid_ip_address, is_loopback_ip_address
+from utils import is_valid_ip_address, is_loopback_ip_address, getipaddrinfo
 
 try:
     import Tkinter
@@ -62,22 +61,36 @@ if not sys.version[:3] in ['2.4', '2.5', '2.6', '2.7']:
 logger = logging.getLogger("web2py")
 
 
-def run_system_tests():
+def run_system_tests(options):
+    """
+    Runs unittests for gluon.tests
+    """
+    import subprocess
     major_version = sys.version_info[0]
     minor_version = sys.version_info[1]
-    print "minor_version = %r" % minor_version
     if major_version == 2:
         if minor_version in (5, 6):
-            print "Python 2.5 or 2.6"
-            ret = os.system("PYTHONPATH=. unit2 -v gluon.tests")
+            sys.stderr.write("Python 2.5 or 2.6\n")
+            ret = subprocess.call(['unit2', '-v', 'gluon.tests'])
         elif minor_version in (7,):
-            print "Python 2.7"
-            ret = os.system("PYTHONPATH=. python -m unittest -v gluon.tests")
+            call_args = [sys.executable, '-m', 'unittest', '-v', 'gluon.tests']
+            if options.with_coverage:
+                try:
+                    import coverage
+                    coverage_config = os.environ.get("COVERAGE_PROCESS_START",
+                                        os.path.join('gluon', 'tests', 'coverage.ini')
+                                    )
+                    call_args = ['coverage', 'run', '--rcfile=%s' % coverage_config, 
+                                    '-m', 'unittest', '-v', 'gluon.tests']
+                except:
+                    sys.stderr.write('Coverage was not installed, skipping\n')
+            sys.stderr.write("Python 2.7\n")
+            ret = subprocess.call(call_args)
         else:
-            print "unknown python 2.x version"
+            sys.stderr.write("unknown python 2.x version\n")
             ret = 256
     else:
-        print "Only Python 2.x supported."
+        sys.stderr.write("Only Python 2.x supported.\n")
         ret = 256
     sys.exit(ret and 1)
 
@@ -324,7 +337,6 @@ class web2pyDialog(object):
             self.tb = None
 
     def update_schedulers(self, start=False):
-        x = 0
         apps = []
         available_apps = [arq for arq in os.listdir('applications/')]
         available_apps = [arq for arq in available_apps
@@ -902,7 +914,18 @@ def console():
                       dest='run_system_tests',
                       default=False,
                       help=msg)
-
+    
+    msg = ('adds coverage reporting (needs --run_system_tests), '
+           'python 2.7 and the coverage module installed. '
+           'You can alter the default path setting the environmental '
+           'var "COVERAGE_PROCESS_START". '
+           'By default it takes gluon/tests/coverage.ini')
+    parser.add_option('--with_coverage',
+                      action='store_true',
+                      dest='with_coverage',
+                      default=False,
+                      help=msg)
+                      
     if '-A' in sys.argv:
         k = sys.argv.index('-A')
     elif '--args' in sys.argv:
@@ -916,14 +939,14 @@ def console():
     global_settings.cmd_args = args
 
     try:
-        options.ips = list(set([
-            ip[4][0] for ip in socket.getaddrinfo(socket.getfqdn(), 0)
-            if not is_loopback_ip_address(ip[4][0])]))
+        options.ips = list(set( # no duplicates
+            [addrinfo[4][0] for addrinfo in getipaddrinfo(socket.getfqdn())
+             if not is_loopback_ip_address(addrinfo=addrinfo)]))
     except socket.gaierror:
         options.ips = []
 
     if options.run_system_tests:
-        run_system_tests()
+        run_system_tests(options)
 
     if options.quiet:
         capture = cStringIO.StringIO()

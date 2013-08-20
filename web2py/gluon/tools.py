@@ -248,6 +248,7 @@ class Mail(object):
         settings.sender = sender
         settings.login = login
         settings.tls = tls
+        settings.hostname = None
         settings.ssl = False
         settings.cipher_type = None
         settings.gpg_home = None
@@ -370,15 +371,16 @@ class Mail(object):
         if not isinstance(sender, str):
             raise Exception('Sender address not specified')
 
-        if not raw:
+        if not raw and attachments:
+            # Use multipart/mixed if there is attachments
             payload_in = MIMEMultipart.MIMEMultipart('mixed')
-        else:
+        elif raw:
             # no encoding configuration for raw messages
             if not isinstance(message, basestring):
                 message = message.read()
             if isinstance(message, unicode):
                 text = message.encode('utf-8')
-            elif not encoding=='utf-8':
+            elif not encoding == 'utf-8':
                 text = message.decode(encoding).encode('utf-8')
             else:
                 text = message
@@ -410,21 +412,43 @@ class Mail(object):
             html = None
 
         if (not text is None or not html is None) and (not raw):
-            attachment = MIMEMultipart.MIMEMultipart('alternative')
+
             if not text is None:
-                if isinstance(text, basestring):
+                if not isinstance(text, basestring):
+                    text = text.read()
+                if isinstance(text, unicode):
+                    text = text.encode('utf-8')
+                elif not encoding == 'utf-8':
                     text = text.decode(encoding).encode('utf-8')
-                else:
-                    text = text.read().decode(encoding).encode('utf-8')
-                attachment.attach(MIMEText.MIMEText(text, _charset='utf-8'))
             if not html is None:
-                if isinstance(html, basestring):
+                if not isinstance(html, basestring):
+                    html = html.read()
+                if isinstance(html, unicode):
+                    html = html.encode('utf-8')
+                elif not encoding == 'utf-8':
                     html = html.decode(encoding).encode('utf-8')
-                else:
-                    html = html.read().decode(encoding).encode('utf-8')
+
+            # Construct mime part only if needed
+            if text and html:
+                # We have text and html we need multipart/alternative
+                attachment = MIMEMultipart.MIMEMultipart('alternative')
+                attachment.attach(MIMEText.MIMEText(text, _charset='utf-8'))
                 attachment.attach(
                     MIMEText.MIMEText(html, 'html', _charset='utf-8'))
-            payload_in.attach(attachment)
+            elif text:
+                attachment = MIMEText.MIMEText(text, _charset='utf-8')
+            elif html:
+                attachment = \
+                    MIMEText.MIMEText(html, 'html', _charset='utf-8')
+
+            if attachments:
+                # If there is attachments put text and html into
+                # multipart/mixed
+                payload_in.attach(attachment)
+            else:
+                # No attachments no multipart/mixed
+                payload_in = attachment
+
         if (attachments is None) or raw:
             pass
         elif isinstance(attachments, (list, tuple)):
@@ -682,9 +706,9 @@ class Mail(object):
                 else:
                     server = smtplib.SMTP(*smtp_args)
                 if self.settings.tls and not self.settings.ssl:
-                    server.ehlo()
+                    server.ehlo(self.settings.hostname)
                     server.starttls()
-                    server.ehlo()
+                    server.ehlo(self.settings.hostname)
                 if self.settings.login:
                     server.login(*self.settings.login.split(':', 1))
                 result = server.sendmail(
@@ -854,6 +878,7 @@ class Auth(object):
         alternate_requires_registration=False,
         create_user_groups="user_%(id)s",
         everybody_group_id=None,
+        manager_group_role=None,
         login_captcha=None,
         register_captcha=None,
         retrieve_username_captcha=None,
@@ -867,6 +892,7 @@ class Auth(object):
         on_failed_authentication=lambda x: redirect(x),
         formstyle="table3cols",
         label_separator=": ",
+        allow_delete_accounts=False,
         password_field='password',
         table_user_name='auth_user',
         table_group_name='auth_group',
@@ -892,6 +918,8 @@ class Auth(object):
         username_case_sensitive=True,
         update_fields = ['email'],
         ondelete="CASCADE",
+        client_side = True,
+        wiki = Settings(),
     )
         # ## these are messages that can be customized
     default_messages = dict(
@@ -899,7 +927,7 @@ class Auth(object):
         register_button='Register',
         password_reset_button='Request reset password',
         password_change_button='Change password',
-        profile_save_button='Save profile',
+        profile_save_button='Apply changes',
         submit_button='Submit',
         verify_password='Verify Password',
         delete_label='Check to delete',
@@ -1182,6 +1210,14 @@ class Auth(object):
         # ## these are messages that can be customized
         messages = self.messages = Messages(current.T)
         messages.update(Auth.default_messages)
+        messages.update(ajax_failed_authentication=DIV(H4('NOT AUTHORIZED'),
+            'Please ',
+            A('login',
+              _href=self.settings.login_url +
+              ('?_next=' + urllib.quote(current.request.env.http_web2py_component_location))
+              if current.request.env.http_web2py_component_location else ''),
+            ' to view this content.',
+            _class='not-authorized alert alert-block'))
         messages.lock_keys = True
 
         # for "remember me" option
@@ -1738,7 +1774,7 @@ class Auth(object):
         if 'registration_id' in checks \
                 and user \
                 and user.registration_id \
-                and user.registration_id != keys.get('registration_id', None):
+                and ('registration_id' not in keys or user.registration_id != str(keys['registration_id'])):
             user = None  # THINK MORE ABOUT THIS? DO WE TRUST OPENID PROVIDER?
         if user:
             update_keys = dict(registration_id=keys['registration_id'])
@@ -2120,7 +2156,7 @@ class Auth(object):
                     callback(onfail, None)
                     redirect(
                         self.url(args=request.args, vars=request.get_vars),
-                        client_side=True)
+                        client_side=self.settings.client_side)
 
         else:
             # use a central authentication server
@@ -2137,7 +2173,8 @@ class Auth(object):
             else:
                 # we need to pass through login again before going on
                 next = self.url(self.settings.function, args='login')
-                redirect(cas.login_url(next), client_side=True)
+                redirect(cas.login_url(next),
+                         client_side=self.settings.client_side)
 
         # process authenticated users
         if user:
@@ -2160,7 +2197,7 @@ class Auth(object):
                 if next == session._auth_next:
                     session._auth_next = None
                 next = replace_id(next, form)
-                redirect(next, client_side=True)
+                redirect(next, client_side=self.settings.client_side)
 
             table_user[username].requires = old_requires
             return form
@@ -2169,7 +2206,7 @@ class Auth(object):
 
         if next == session._auth_next:
             del session._auth_next
-        redirect(next, client_side=True)
+        redirect(next, client_side=self.settings.client_side)
 
     def logout(self, next=DEFAULT, onlogout=DEFAULT, log=DEFAULT):
         """
@@ -2221,7 +2258,8 @@ class Auth(object):
         response = current.response
         session = current.session
         if self.is_logged_in():
-            redirect(self.settings.logged_url, client_side=True)
+            redirect(self.settings.logged_url,
+                     client_side=self.settings.client_side)
         if next is DEFAULT:
             next = self.next or self.settings.register_next
         if onvalidation is DEFAULT:
@@ -2232,7 +2270,9 @@ class Auth(object):
             log = self.messages.register_log
 
         table_user = self.table_user()
-        if 'username' in table_user.fields:
+        if self.settings.login_userfield:
+            username = self.settings.login_userfield
+        elif 'username' in table_user.fields:
             username = 'username'
         else:
             username = 'email'
@@ -2337,7 +2377,7 @@ class Auth(object):
                 next = self.url(args=request.args)
             else:
                 next = replace_id(next, form)
-            redirect(next, client_side=True)
+            redirect(next, client_side=self.settings.client_side)
         return form
 
     def is_logged_in(self):
@@ -2585,7 +2625,7 @@ class Auth(object):
                 raise Exception
         except Exception:
             session.flash = self.messages.invalid_reset_password
-            redirect(next, client_side=True)
+            redirect(next, client_side=self.settings.client_side)
         passfield = self.settings.password_field
         form = SQLFORM.factory(
             Field('new_password', 'password',
@@ -2610,7 +2650,7 @@ class Auth(object):
             session.flash = self.messages.password_changed
             if self.settings.login_after_password_change:
                 self.login_user(user)
-            redirect(next, client_side=True)
+            redirect(next, client_side=self.settings.client_side)
         return form
 
     def request_reset_password(
@@ -2668,10 +2708,12 @@ class Auth(object):
             user = table_user(email=form.vars.email)
             if not user:
                 session.flash = self.messages.invalid_email
-                redirect(self.url(args=request.args), client_side=True)
+                redirect(self.url(args=request.args),
+                         client_side=self.settings.client_side)
             elif user.registration_key in ('pending', 'disabled', 'blocked'):
                 session.flash = self.messages.registration_pending
-                redirect(self.url(args=request.args), client_side=True)
+                redirect(self.url(args=request.args),
+                         client_side=self.settings.client_side)
             if self.email_reset_password(user):
                 session.flash = self.messages.email_sent
             else:
@@ -2682,7 +2724,7 @@ class Auth(object):
                 next = self.url(args=request.args)
             else:
                 next = replace_id(next, form)
-            redirect(next, client_side=True)
+            redirect(next, client_side=self.settings.client_side)
         # old_requires = table_user.email.requires
         return form
 
@@ -2727,7 +2769,8 @@ class Auth(object):
         """
 
         if not self.is_logged_in():
-            redirect(self.settings.login_url, client_side=True)
+            redirect(self.settings.login_url,
+                     client_side=self.settings.client_side)
         db = self.db
         table_user = self.table_user()
         s = db(table_user.id == self.user.id)
@@ -2777,7 +2820,7 @@ class Auth(object):
                     next = self.url(args=request.args)
                 else:
                     next = replace_id(next, form)
-                redirect(next, client_side=True)
+                redirect(next, client_side=self.settings.client_side)
         return form
 
     def profile(
@@ -2797,7 +2840,8 @@ class Auth(object):
 
         table_user = self.table_user()
         if not self.is_logged_in():
-            redirect(self.settings.login_url, client_side=True)
+            redirect(self.settings.login_url,
+                     client_side=self.settings.client_side)
         passfield = self.settings.password_field
         table_user[passfield].writable = False
         request = current.request
@@ -2820,20 +2864,24 @@ class Auth(object):
             delete_label=self.messages.delete_label,
             upload=self.settings.download_url,
             formstyle=self.settings.formstyle,
-            separator=self.settings.label_separator
+            separator=self.settings.label_separator,
+            deletable=self.settings.allow_delete_accounts,
             )
         if form.accepts(request, session,
                         formname='profile',
-                        onvalidation=onvalidation, hideerror=self.settings.hideerror):
+                        onvalidation=onvalidation,
+                        hideerror=self.settings.hideerror):
             self.user.update(table_user._filter_fields(form.vars))
             session.flash = self.messages.profile_updated
             self.log_event(log, self.user)
             callback(onaccept, form)
+            if form.deleted:
+                return self.logout()
             if not next:
                 next = self.url(args=request.args)
             else:
                 next = replace_id(next, form)
-            redirect(next, client_side=True)
+            redirect(next, client_side=self.settings.client_side)
         return form
 
     def is_impersonating(self):
@@ -2947,7 +2995,7 @@ class Auth(object):
                 if requires_login:
                     if not user:
                         if current.request.ajax:
-                            raise HTTP(401)
+                            raise HTTP(401, self.messages.ajax_failed_authentication)
                         elif not otherwise is None:
                             if callable(otherwise):
                                 return otherwise()
@@ -2955,8 +3003,6 @@ class Auth(object):
                         elif self.settings.allow_basic_login_only or \
                                 basic_accepted or current.request.is_restful:
                             raise HTTP(403, "Not authorized")
-                        elif current.request.ajax:
-                            return A('login', _href=self.settings.login_url)
                         else:
                             next = self.here()
                             current.session.flash = current.response.flash
@@ -3009,7 +3055,7 @@ class Auth(object):
             return self.has_permission(name, table_name, record_id)
         return self.requires(has_permission, otherwise=otherwise)
 
-    def requires_signature(self, otherwise=None):
+    def requires_signature(self, otherwise=None, hash_vars=True):
         """
         decorator that prevents access to action if not logged in or
         if user logged in is not a member of group_id.
@@ -3017,7 +3063,7 @@ class Auth(object):
         group_id is calculated.
         """
         def verify():
-            return URL.verify(current.request, user_signature=True)
+            return URL.verify(current.request, user_signature=True, hash_vars=hash_vars)
         return self.requires(verify, otherwise)
 
     def add_group(self, role, description=''):
@@ -3368,7 +3414,12 @@ class Auth(object):
              resolve=True,
              extra=None,
              menu_groups=None,
-             templates=None):
+             templates=None,
+             migrate=True,
+             controller=None,
+             function=None):
+
+        if controller and function: resolve = False
 
         if not hasattr(self, '_wiki'):
             self._wiki = Wiki(self, render=render,
@@ -3377,9 +3428,13 @@ class Auth(object):
                               restrict_search=restrict_search,
                               env=env, extra=extra or {},
                               menu_groups=menu_groups,
-                              templates=templates)
+                              templates=templates,
+                              migrate=migrate,
+                              controller=controller,
+                              function=function)
         else:
             self._wiki.env.update(env or {})
+
         # if resolve is set to True, process request as wiki call
         # resolve=False allows initial setup without wiki redirection
         wiki = None
@@ -3395,6 +3450,13 @@ class Auth(object):
             if isinstance(wiki, basestring):
                 wiki = XML(wiki)
             return wiki
+
+    def wikimenu(self):
+        """to be used in menu.py for app wide wiki menus"""
+        if (hasattr(self, "_wiki") and
+            self._wiki.settings.controller and
+            self._wiki.settings.function):
+            self._wiki.automenu()
 
 
 class Crud(object):
@@ -3448,7 +3510,7 @@ class Crud(object):
 
         messages = self.messages = Messages(current.T)
         messages.submit_button = 'Submit'
-        messages.delete_label = 'Check to delete:'
+        messages.delete_label = 'Check to delete'
         messages.record_created = 'Record Created'
         messages.record_updated = 'Record Updated'
         messages.record_deleted = 'Record Deleted'
@@ -4975,9 +5037,10 @@ class Wiki(object):
     def __init__(self, auth, env=None, render='markmin',
                  manage_permissions=False, force_prefix='',
                  restrict_search=False, extra=None,
-                 menu_groups=None, templates=None):
+                 menu_groups=None, templates=None, migrate=True,
+                 controller=None, function=None):
 
-        settings = self.settings = Settings()
+        settings = self.settings = auth.settings.wiki
 
         # render: "markmin", "html", ..., <function>
         settings.render = render
@@ -4988,11 +5051,14 @@ class Wiki(object):
         settings.extra = extra or {}
         settings.menu_groups = menu_groups
         settings.templates = templates
+        settings.controller = controller
+        settings.function = function
 
         db = auth.db
         self.env = env or {}
         self.env['component'] = Wiki.component
         self.auth = auth
+        self.wiki_menu_items = None
 
         if self.auth.user:
             self.settings.force_prefix = force_prefix % self.auth.user
@@ -5023,20 +5089,20 @@ class Wiki(object):
                               compute=self.get_render(),
                               readable=False, writable=False),
                         auth.signature],
-              'vars':{'format':'%(title)s'}}),
+                    'vars':{'format':'%(title)s', 'migrate':migrate}}),
             ('wiki_tag', {
                     'args':[
                         Field('name'),
                         Field('wiki_page', 'reference wiki_page'),
                         auth.signature],
-                    'vars':{'format':'%(name)s'}}),
+                    'vars':{'format':'%(title)s', 'migrate':migrate}}),
             ('wiki_media', {
                     'args':[
                         Field('wiki_page', 'reference wiki_page'),
                         Field('title', required=True),
                         Field('filename', 'upload', required=True),
                         auth.signature],
-                    'vars':{'format':'%(title)s'}})
+                    'vars':{'format':'%(title)s', 'migrate':migrate}}),
             ]
 
         # define only non-existent tables
@@ -5131,10 +5197,21 @@ class Wiki(object):
 
     ### END POLICY
 
+    def automenu(self):
+        """adds the menu if not present"""
+        request = current.request
+        if not self.wiki_menu_items and self.settings.controller and self.settings.function:
+            self.wiki_menu_items = self.menu(self.settings.controller,
+                                             self.settings.function)
+            current.response.menu += self.wiki_menu_items
+
     def __call__(self):
         request = current.request
-        automenu = self.menu(request.controller, request.function)
-        current.response.menu += automenu
+        settings = self.settings
+        settings.controller = settings.controller or request.controller
+        settings.function = settings.function or request.function
+        self.automenu()
+
         zero = request.args(0) or 'index'
         if zero and zero.isdigit():
             return self.media(int(zero))
@@ -5193,6 +5270,7 @@ class Wiki(object):
             else:
                 return dict(title=page.title,
                             slug=page.slug,
+                            page=page,
                             content=XML(self.fix_hostname(page.html)),
                             tags=page.tags,
                             created_on=page.created_on,
@@ -5205,6 +5283,7 @@ class Wiki(object):
             else:
                 return dict(title=page.title,
                             slug=page.slug,
+                            page=page,
                             content=page.body,
                             tags=page.tags,
                             created_on=page.created_on,
@@ -5255,25 +5334,27 @@ class Wiki(object):
             current.session.flash = 'page created'
             redirect(URL(args=slug))
         script = """
-        $(function() {
+        jQuery(function() {
             if (!jQuery('#wiki_page_body').length) return;
             var pagecontent = jQuery('#wiki_page_body');
             pagecontent.css('font-family',
                             'Monaco,Menlo,Consolas,"Courier New",monospace');
             var prevbutton = jQuery('<button class="btn nopreview">Preview</button>');
-            var mediabutton = jQuery('<button class="btn nopreview">Media</button>');
             var preview = jQuery('<div id="preview"></div>').hide();
             var previewmedia = jQuery('<div id="previewmedia"></div>');
             var form = pagecontent.closest('form');
             preview.insertBefore(form);
             prevbutton.insertBefore(form);
-            mediabutton.insertBefore(form);
-            previewmedia.insertBefore(form);
-            mediabutton.toggle(function() {
-                web2py_component('%(urlmedia)s', 'previewmedia');
-            }, function() {
-                previewmedia.empty();
-            });
+            if(%(link_media)s) {
+              var mediabutton = jQuery('<button class="btn nopreview">Media</button>');
+              mediabutton.insertBefore(form);
+              previewmedia.insertBefore(form);
+              mediabutton.toggle(function() {
+                  web2py_component('%(urlmedia)s', 'previewmedia');
+              }, function() {
+                  previewmedia.empty();
+              });
+            }
             prevbutton.click(function(e) {
                 e.preventDefault();
                 if (prevbutton.hasClass('nopreview')) {
@@ -5288,7 +5369,7 @@ class Wiki(object):
                 }
             })
         })
-        """ % dict(url=URL(args=('_preview', slug)),
+        """ % dict(url=URL(args=('_preview', slug)),link_media=('true' if page else 'false'),
                    urlmedia=URL(extension='load',
                                 args=('_editmedia',slug),
                                 vars=dict(embedded=1)))
@@ -5348,7 +5429,7 @@ class Wiki(object):
                                             '%(slug)s')),
                       comment=current.T(
                         "Choose Template or empty for new Page")))
-        form = SQLFORM.factory(*fields, **dict(_class="well span6"))
+        form = SQLFORM.factory(*fields, **dict(_class="well"))
         form.element("[type=submit]").attributes["_value"] = \
             current.T("Create Page from Slug")
 
@@ -5413,8 +5494,8 @@ class Wiki(object):
                     items = link[2:].split('/')
                     if len(items) > 3:
                         title_page = items[3]
-                        link = URL(a=items[0] or None, c=items[1] or None,
-                                   f=items[2] or None, args=items[3:])
+                        link = URL(a=items[0] or None, c=items[1] or controller,
+                                   f=items[2] or function, args=items[3:])
                 parent = tree.get(base[1:], tree[''])
                 subtree = []
                 tree[base] = subtree

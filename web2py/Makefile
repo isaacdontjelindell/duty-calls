@@ -30,7 +30,7 @@ update:
 	echo "remember that pymysql was tweaked"
 src:
 	### Use semantic versioning
-	echo 'Version 2.4.6-stable+timestamp.'`date +%Y.%m.%d.%H.%M.%S` > VERSION
+	echo 'Version 2.5.1-stable+timestamp.'`date +%Y.%m.%d.%H.%M.%S` > VERSION
 	### rm -f all junk files
 	make clean
 	### clean up baisc apps
@@ -64,9 +64,10 @@ app:
 	python2.7 -c 'import compileall; compileall.compile_dir("gluon/")'
 	#python web2py.py -S welcome -R __exit__.py
 	#cd ../web2py_osx/site-packages/; unzip ../site-packages.zip
-	find gluon -path '*.pyc' -exec cp {} ../web2py_osx/site-packages/{} \;
-	cd ../web2py_osx/site-packages/; zip -r ../site-packages.zip *
-	mv ../web2py_osx/site-packages.zip ../web2py_osx/web2py/web2py.app/Contents/Resources/lib/python2.7
+	#find gluon -path '*.pyc' -exec cp {} ../web2py_osx/site-packages/{} \;
+	#cd ../web2py_osx/site-packages/; zip -r ../site-packages.zip *
+	#mv ../web2py_osx/site-packages.zip ../web2py_osx/web2py/web2py.app/Contents/Resources/lib/python2.7
+	find gluon -path '*.py' -exec cp {} ../web2py_osx/web2py/web2py.app/Contents/Resources/{} \;	
 	cp README.markdown ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp NEWINSTALL ../web2py_osx/web2py/web2py.app/Contents/Resources
 	cp LICENSE ../web2py_osx/web2py/web2py.app/Contents/Resources
@@ -118,6 +119,7 @@ commit:
 push:
 	hg push
 	git push
+	git push --tags
 tag:
 	git tag -l '$(S)'
 	hg tag -l '$(S)'

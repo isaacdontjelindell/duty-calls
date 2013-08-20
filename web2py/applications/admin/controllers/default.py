@@ -138,17 +138,17 @@ def check_version():
     session.forget()
     session._unlock(response)
 
-    new_version, version_number = check_new_version(request.env.web2py_version,
-                                                    WEB2PY_VERSION_URL)
+    new_version, version = check_new_version(request.env.web2py_version,
+                                             WEB2PY_VERSION_URL)
 
     if new_version == -1:
         return A(T('Unable to check for upgrades'), _href=WEB2PY_URL)
     elif new_version != True:
         return A(T('web2py is up to date'), _href=WEB2PY_URL)
     elif platform.system().lower() in ('windows', 'win32', 'win64') and os.path.exists("web2py.exe"):
-        return SPAN('You should upgrade to version %s' % version_number)
+        return SPAN('You should upgrade to %s' % version.split('(')[0])
     else:
-        return sp_button(URL('upgrade_web2py'), T('upgrade now to %s') % version_number.split('-')[0])
+        return sp_button(URL('upgrade_web2py'), T('upgrade now to %s') % version.split('(')[0])
 
 
 def logout():
@@ -1675,26 +1675,6 @@ def update_languages():
     update_all_languages(apath(app, r=request))
     session.flash = T('Language files (static strings) updated')
     redirect(URL('design', args=app, anchor='languages'))
-
-
-def twitter():
-    session.forget()
-    session._unlock(response)
-    import gluon.tools
-    import gluon.contrib.simplejson as sj
-    try:
-        if TWITTER_HASH:
-            page = urllib.urlopen("http://search.twitter.com/search.json?q=%%40%s" % TWITTER_HASH).read()
-            data = sj.loads(page, encoding="utf-8")['results']
-            d = dict()
-            for e in data:
-                d[e["id"]] = e
-                r = reversed(sorted(d))
-            return dict(tweets=[d[k] for k in r])
-        else:
-            return 'disabled'
-    except Exception, e:
-        return DIV(T('Unable to download because:'), BR(), str(e))
 
 
 def user():

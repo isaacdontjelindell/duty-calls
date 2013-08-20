@@ -18,10 +18,11 @@ try:
 except ImportError:
     from cgi import parse_qs as psq
 import os
+import copy
 from http import HTTP
 from html import XmlComponent
 from html import XML, SPAN, TAG, A, DIV, CAT, UL, LI, TEXTAREA, BR, IMG, SCRIPT
-from html import FORM, INPUT, LABEL, OPTION, SELECT, BUTTON
+from html import FORM, INPUT, LABEL, OPTION, SELECT
 from html import TABLE, THEAD, TBODY, TR, TD, TH, STYLE
 from html import URL, truncate_string, FIELDSET
 from dal import DAL, Field, Table, Row, CALLABLETYPES, smart_query, \
@@ -36,7 +37,7 @@ import datetime
 import urllib
 import re
 import cStringIO
-from gluon import current, redirect, A, URL, DIV, H3, UL, LI, SPAN, INPUT
+from gluon import current, redirect
 import inspect
 import settings
 is_gae = settings.global_settings.web2py_runtime_gae
@@ -81,6 +82,27 @@ def safe_float(x):
         return 0
 
 
+def show_if(cond):
+    if not cond:
+        return None
+    base = "%s_%s" % (cond.first.tablename, cond.first.name)
+    if ((cond.op.__name__ == 'EQ' and cond.second == True) or 
+        (cond.op.__name__ == 'NE' and cond.second == False)):            
+        return base,":checked"
+    if ((cond.op.__name__ == 'EQ' and cond.second == False) or
+        (cond.op.__name__ == 'NE' and cond.second == True)):
+        return base,":not(:checked)"
+    if cond.op.__name__ == 'EQ':
+        return base,"[value='%s']" % cond.second
+    if cond.op.__name__ == 'NE':
+        return base,"[value!='%s']" % cond.second
+    if cond.op.__name__ == 'CONTAINS':
+        return base,"[value~='%s']" % cond.second    
+    if cond.op.__name__ == 'BELONGS' and isinstance(cond.second,(list,tuple)):
+        return base,','.join("[value='%s']" % (v) for v in cond.second)
+    raise RuntimeError("Not Implemented Error")
+
+
 class FormWidget(object):
     """
     helper for SQLFORM to generate form input fields
@@ -101,12 +123,16 @@ class FormWidget(object):
         :param attributes: any other supplied attributes
         """
         attr = dict(
-            _id='%s_%s' % (field._tablename, field.name),
+            _id='%s_%s' % (field.tablename, field.name),
             _class=cls._class or
                 widget_class.match(str(field.type)).group(),
-            _name=field.name,
+            _name=field.name,            
             requires=field.requires,
         )
+        if getattr(field,'show_if',None):
+            trigger, cond = show_if(field.show_if)
+            attr['_data-show-trigger'] = trigger
+            attr['_data-show-if'] = cond
         attr.update(widget_attributes)
         attr.update(attributes)
         return attr
@@ -261,7 +287,7 @@ class ListWidget(StringWidget):
 
     @classmethod
     def widget(cls, field, value, **attributes):
-        _id = '%s_%s' % (field._tablename, field.name)
+        _id = '%s_%s' % (field.tablename, field.name)
         _name = field.name
         if field.type == 'list:integer':
             _class = 'integer'
@@ -625,7 +651,8 @@ class AutocompleteWidget(object):
         self.help_fields = help_fields or []
         self.help_string = help_string
         if self.help_fields and not self.help_string:
-            self.help_string = ' '.join('%%(%s)s' for f in self.help_fields)
+            self.help_string = ' '.join('%%(%s)s'%f.name 
+                                        for f in self.help_fields)
 
         self.request = request
         self.keyword = keyword % dict(tablename=field.tablename,
@@ -651,9 +678,9 @@ class AutocompleteWidget(object):
         if self.keyword in self.request.vars:
             field = self.fields[0]
             if is_gae:
-                rows = self.db(field.__ge__(self.request.vars[self.keyword]) & field.__lt__(self.request.vars[self.keyword] + u'\ufffd')).select(orderby=self.orderby, limitby=self.limitby, *self.fields)
+                rows = self.db(field.__ge__(self.request.vars[self.keyword]) & field.__lt__(self.request.vars[self.keyword] + u'\ufffd')).select(orderby=self.orderby, limitby=self.limitby, *(self.fields+self.help_field))
             else:
-                rows = self.db(field.like(self.request.vars[self.keyword] + '%')).select(orderby=self.orderby, limitby=self.limitby, distinct=self.distinct, *self.fields)
+                rows = self.db(field.like(self.request.vars[self.keyword] + '%')).select(orderby=self.orderby, limitby=self.limitby, distinct=self.distinct, *(self.fields+self.help_field))
             if rows:
                 if self.is_reference:
                     id_field = self.fields[1]
@@ -1073,7 +1100,7 @@ class SQLFORM(FORM):
             cond = readonly or \
                 (not ignore_rw and not field.writable and field.readable)
 
-            if default and not cond:
+            if default is not None and not cond:
                 default = field.formatter(default)
             dspval = default
             inpval = default
@@ -1456,8 +1483,9 @@ class SQLFORM(FORM):
                     if not f:
                         continue
                     else:
-                        f = os.path.join(current.request.folder,
-                                         os.path.normpath(f))
+                        f = os.path.join(
+                            current.request.folder, 
+                            os.path.normpath(f))
                         source_file = open(f, 'rb')
                         original_filename = os.path.split(f)[1]
                 elif hasattr(f, 'file'):
@@ -1466,6 +1494,10 @@ class SQLFORM(FORM):
                     ### do not know why this happens, it should not
                     (source_file, original_filename) = \
                         (cStringIO.StringIO(f), 'file.txt')
+                else:
+                    # this should never happen, why does it happen?
+                    print 'f=',repr(f)
+                    continue
                 newfilename = field.store(source_file, original_filename,
                                           field.uploadfolder)
                 # this line was for backward compatibility but problematic
@@ -1648,7 +1680,14 @@ class SQLFORM(FORM):
         selectfields = []
         for field in fields:
             name = str(field).replace('.', '-')
-            options = search_options.get(field.type.split(' ')[0], None)
+            # treat ftype 'decimal' as 'double'
+            # (this fixes problems but needs refactoring!
+            ftype = field.type.split(' ')[0]
+            if ftype.startswith('decimal'): ftype = 'double'
+            elif ftype=='bigint': ftype = 'integer'
+            elif ftype.startswith('big-'): ftype = ftype[4:]
+            # end
+            options = search_options.get(ftype, None)
             if options:
                 label = isinstance(
                     field.label, str) and T(field.label) or field.label
@@ -1728,6 +1767,7 @@ class SQLFORM(FORM):
         return CAT(
             DIV(_id=panel_id, _style="display:none;", *criteria), fadd)
 
+
     @staticmethod
     def grid(query,
              fields=None,
@@ -1773,7 +1813,9 @@ class SQLFORM(FORM):
              selectable_submit_button='Submit',
              buttons_placement = 'right',
              links_placement = 'right',
-             noconfirm=False
+             noconfirm=False,
+             cache_count=None,
+             client_side_delete=False,
              ):
 
         # jQuery UI ThemeRoller classes (empty if ui is disabled)
@@ -1826,6 +1868,33 @@ class SQLFORM(FORM):
         create = wenabled and create
         editable = wenabled and editable
         deletable = wenabled and deletable
+        rows = None
+
+        def fetch_count(dbset):
+            ##FIXME for google:datastore cache_count is ignored
+            ## if it's not an integer
+            if cache_count is None or isinstance(cache_count, tuple):
+                if groupby:
+                    c = 'count(*)'
+                    nrows = db.executesql(
+                        'select count(*) from (%s);' %
+                        dbset._select(c, left=left, cacheable=True,
+                                      groupby=groupby, cache=cache_count)[:-1])[0][0]
+                elif left:
+                    c = 'count(*)'
+                    nrows = dbset.select(c, left=left, cacheable=True, cache=cache_count).first()[c]
+                elif dbset._db._adapter.dbengine=='google:datastore':
+                    #if we don't set a limit, this can timeout for a large table
+                    nrows = dbset.db._adapter.count(dbset.query, limit=1000)
+                else:
+                    nrows = dbset.count(cache=cache_count)
+            elif isinstance(cache_count, (int, long)):
+                    nrows = cache_count
+            elif callable(cache_count):
+                nrows = cache_count(dbset, request.vars)
+            else:
+                nrows = 0
+            return nrows
 
         def url(**b):
             b['args'] = args + b.get('args', [])
@@ -1865,7 +1934,7 @@ class SQLFORM(FORM):
                        delete=None, trap=True, noconfirm=None):
             if showbuttontext:
                 return A(SPAN(_class=ui.get(buttonclass)),
-                         SPAN(T(buttontext), _title=buttontext,
+                         SPAN(T(buttontext), _title=T(buttontext),
                               _class=ui.get('buttontext')),
                          _href=buttonurl,
                          callback=callback,
@@ -1878,7 +1947,7 @@ class SQLFORM(FORM):
                          callback=callback,
                          delete=delete,
                          noconfirm=noconfirm,
-                         _title=buttontext,
+                         _title=T(buttontext),
                          _class=trap_class(ui.get('buttontext'), trap))
 
         dbset = db(query)
@@ -1889,14 +1958,20 @@ class SQLFORM(FORM):
             for join in left:
                 tablenames += db._adapter.tables(join)
         tables = [db[tablename] for tablename in tablenames]
-        if not fields:
-            fields = reduce(lambda a, b: a + b,
-                            [[field for field in table] for table in tables])
+        if fields:
+            columns = copy.copy(fields)
+        else:
+            fields = []
+            columns = []
+            for table in tables:
+                fields += [f for f in table]
+                columns +=  [f for f in table]
+                for k,f in table.iteritems():
+                    if isinstance(f,Field.Virtual) and f.readable:
+                        f.tablename = table._tablename
+                        columns.append(f)
         if not field_id:
             field_id = tables[0]._id
-        columns = [str(field) for field in fields
-                   if field._tablename in tablenames]
-
         if not any(str(f)==str(field_id) for f in fields):
             fields = [f for f in fields]+[field_id]
         table = field_id.table
@@ -1957,6 +2032,7 @@ class SQLFORM(FORM):
             res.update_form = update_form
             res.view_form = view_form
             res.search_form = search_form
+            res.rows = None
             return res
 
         elif details and request.args(-3) == 'view':
@@ -1973,15 +2049,17 @@ class SQLFORM(FORM):
             res.update_form = update_form
             res.view_form = view_form
             res.search_form = search_form
+            res.rows = None
             return res
         elif editable and request.args(-3) == 'edit':
             table = db[request.args[-2]]
             record = table(request.args[-1]) or redirect(URL('error'))
             sqlformargs.update(editargs)
+            deletable_ = deletable(record) if callable(deletable) else deletable
             update_form = SQLFORM(
                 table,
                 record, upload=upload, ignore_rw=ignore_rw,
-                formstyle=formstyle, deletable=deletable,
+                formstyle=formstyle, deletable=deletable_,
                 _class='web2py_form',
                 submit_button=T('Submit'),
                 delete_label=T('Check to delete'),
@@ -1998,13 +2076,21 @@ class SQLFORM(FORM):
             res.update_form = update_form
             res.view_form = view_form
             res.search_form = search_form
+            res.rows = None
             return res
         elif deletable and request.args(-3) == 'delete':
             table = db[request.args[-2]]
-            if ondelete:
-                ondelete(table, request.args[-1])
-            db(table[table._id.name] == request.args[-1]).delete()
-            redirect(referrer)
+            if not callable(deletable):
+                if ondelete:
+                    ondelete(table, request.args[-1])
+                db(table[table._id.name] == request.args[-1]).delete()
+            else:
+                record = table(request.args[-1]) or redirect(URL('error'))
+                if deletable(record):
+                    if ondelete:
+                        ondelete(table, request.args[-1])
+                    record.delete_record()
+            redirect(referrer, client_side=client_side_delete)
 
         exportManager = dict(
             csv_with_hidden_cols=(ExporterCSV, 'CSV (hidden cols)'),
@@ -2035,12 +2121,12 @@ class SQLFORM(FORM):
                     if sign == '~':
                         orderby = ~orderby
 
-            expcolumns = columns
+            expcolumns = [str(f) for f in columns]
             if export_type.endswith('with_hidden_cols'):
                 expcolumns = []
                 for table in tables:
                     for field in table:
-                        if field.readable and field._tablename in tablenames:
+                        if field.readable and field.tablename in tablenames:
                             expcolumns.append(field)
 
             if export_type in exportManager and exportManager[export_type]:
@@ -2055,7 +2141,7 @@ class SQLFORM(FORM):
                 else:
                     rows = dbset.select(left=left, orderby=orderby,
                                     cacheable=True, *expcolumns)
-
+                
                 value = exportManager[export_type]
                 clazz = value[0] if hasattr(value, '__getitem__') else value
                 oExp = clazz(rows)
@@ -2122,20 +2208,7 @@ class SQLFORM(FORM):
         if subquery:
             dbset = dbset(subquery)
         try:
-            if groupby:
-                c = 'count(*)'
-                nrows = db.executesql(
-                    'select count(*) from (%s);' %
-                    dbset._select(c, left=left, cacheable=True,
-                                  groupby=groupby)[:-1])[0][0]
-            elif left:
-                c = 'count(*)'
-                nrows = dbset.select(c, left=left, cacheable=True).first()[c]
-            elif dbset._db._adapter.dbengine=='google:datastore':
-                #if we don't set a limit, this can timeout for a large table
-                nrows = dbset.db._adapter.count(dbset.query, limit=1000)
-            else:
-                nrows = dbset.count()
+            nrows = fetch_count(dbset)
         except:
             nrows = 0
             error = T('Unsupported query')
@@ -2154,9 +2227,7 @@ class SQLFORM(FORM):
         headcols = []
         if selectable:
             headcols.append(TH(_class=ui.get('default')))
-        for field in fields:
-            if columns and not str(field) in columns:
-                continue
+        for field in columns:
             if not field.readable:
                 continue
             key = str(field)
@@ -2210,7 +2281,7 @@ class SQLFORM(FORM):
             limitby = None
 
         try:
-            table_fields = [f for f in fields if f._tablename in tablenames]
+            table_fields = [f for f in fields if f.tablename in tablenames]
             if dbset._db._adapter.dbengine=='google:datastore':
                 rows = dbset.select(left=left,orderby=orderby,
                                     groupby=groupby,limitby=limitby,
@@ -2236,7 +2307,7 @@ class SQLFORM(FORM):
                 message = T('at least %(nrows)s records found') % dict(nrows=nrows)
             else:
                 message = T('%(nrows)s records found') % dict(nrows=nrows)
-        console.append(DIV(message,_class='web2py_counter'))
+        console.append(DIV(message or T('None'),_class='web2py_counter'))
 
         paginator = UL()
         if paginate and dbset._db._adapter.dbengine=='google:datastore':
@@ -2298,14 +2369,12 @@ class SQLFORM(FORM):
                     trcols.append(
                         INPUT(_type="checkbox", _name="records", _value=id,
                                     value=request.vars.records))
-                for field in fields:
-                    if not str(field) in columns:
-                        continue
+                for field in columns:
                     if not field.readable:
                         continue
                     if field.type == 'blob':
                         continue
-                    value = row[field]
+                    value = row[str(field)]
                     maxlength = maxtextlengths.get(str(field), maxtextlength)
                     if field.represent:
                         try:
@@ -2313,7 +2382,7 @@ class SQLFORM(FORM):
                         except KeyError:
                             try:
                                 value = field.represent(
-                                    value, row[field._tablename])
+                                    value, row[field.tablename])
                             except KeyError:
                                 pass
                     elif field.type == 'boolean':
@@ -2323,9 +2392,9 @@ class SQLFORM(FORM):
                         if value:
                             if callable(upload):
                                 value = A(
-                                    current.T('file'), _href=upload(value))
+                                    T('file'), _href=upload(value))
                             elif upload:
-                                value = A(current.T('file'),
+                                value = A(T('file'),
                                           _href='%s/%s' % (upload, value))
                         else:
                             value = ''
@@ -2397,7 +2466,7 @@ class SQLFORM(FORM):
                     selectable(records)
                     redirect(referrer)
         else:
-            htmltable = DIV(current.T('No records found'))
+            htmltable = DIV(T('No records found'))
 
         if csv and nrows:
             export_links = []
@@ -2427,6 +2496,7 @@ class SQLFORM(FORM):
         res.update_form = update_form
         res.view_form = view_form
         res.search_form = search_form
+        res.rows = rows
         return res
 
     @staticmethod
@@ -2486,7 +2556,7 @@ class SQLFORM(FORM):
         name = None
         def format(table,row):
             if not row:
-                return 'Unknown'
+                return T('Unknown')
             elif isinstance(table._format,str):
                 return table._format % row
             elif callable(table._format):
@@ -2616,11 +2686,11 @@ class SQLFORM(FORM):
                     SPAN(divider, _class='divider') if next else '',
                     _class='active w2p_grid_breadcrumb_elem'))
             if grid.create_form:
-                header = T('New %s' % table._singular)
+                header = T('New %(entity)s') % dict(entity=table._singular)
             elif grid.update_form:
-                header = T('Edit %s' % format(table,grid.update_form.record))
+                header = T('Edit %(entity)s') % dict(entity=format(table,grid.update_form.record))
             elif grid.view_form:
-                header = T('View %s' % format(table,grid.view_form.record))
+                header = T('View %(entity)s') % dict(entity=format(table,grid.view_form.record))
             if next:
                 breadcrumbs.append(LI(
                             A(T(header), _class=trap_class(),_href=url()),
@@ -3062,3 +3132,4 @@ class ExporterJSON(ExportClass):
             return self.rows.as_json()
         else:
             return 'null'
+

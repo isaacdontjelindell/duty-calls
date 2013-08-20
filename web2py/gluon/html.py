@@ -586,7 +586,7 @@ class XML(XmlComponent):
         return self.text
 
     def __str__(self):
-        return self.xml()
+        return self.text
 
     def __add__(self, other):
         return '%s%s' % (self, other)
@@ -600,8 +600,9 @@ class XML(XmlComponent):
     def __hash__(self):
         return hash(str(self))
 
-    def __getattr__(self, name):
-        return getattr(str(self), name)
+#    why was this here? Break unpickling in sessions
+#    def __getattr__(self, name):
+#        return getattr(str(self), name)
 
     def __getitem__(self, i):
         return str(self)[i]
@@ -1197,6 +1198,13 @@ def TAG_pickler(data):
     return (TAG_unpickler, (marshal_dump,))
 
 
+class __tag__(DIV):
+    def __init__(self,name,*a,**b):
+        DIV.__init__(self,*a,**b)
+        self.tag = name
+
+copy_reg.pickle(__tag__, TAG_pickler, TAG_unpickler)
+
 class __TAG__(XmlComponent):
 
     """
@@ -1215,11 +1223,7 @@ class __TAG__(XmlComponent):
             name = name[:-1] + '/'
         if isinstance(name, unicode):
             name = name.encode('utf-8')
-
-        class __tag__(DIV):
-            tag = name
-        copy_reg.pickle(__tag__, TAG_pickler, TAG_unpickler)
-        return lambda *a, **b: __tag__(*a, **b)
+        return lambda *a,**b: __tag__(name,*a,**b)
 
     def __call__(self, html):
         return web2pyHTMLParser(decoder.decoder(html)).tree
@@ -1991,10 +1995,10 @@ class FORM(DIV):
         status = True
         changed = False
         request_vars = self.request_vars
-        if session:
+        if session is not None:
             formkey = session.get('_formkey[%s]' % formname, None)
             # check if user tampering with form and void CSRF
-            if formkey != request_vars._formkey:
+            if not formkey or formkey != request_vars._formkey:
                 status = False
         if formname != request_vars._formname:
             status = False
